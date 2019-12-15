@@ -163,7 +163,6 @@ void print(int x, int y, int col, const char *text);
 void draw_screen();
 void print4(int x, int y, int col, const char *text);
 void drawBar(int y, int h, int c);
-
 void start_systick();
-
+void drawImage(uint16_t x, uint16_t y, uint16_t w, uint16_t h, const uint16_t* data);
 void board_set_rtc_signature(uint32_t sig, uint32_t arg);

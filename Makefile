@@ -64,9 +64,6 @@ FLAGS		+= -mthumb $(CPUFLAGS) \
 	   -lopencm3_stm32$(FN) \
         $(EXTRAFLAGS)
 
-
-OPENOCDALL = $(OPENOCD) -f $(JTAGCONFIG) -f target/stm32$(FN)x.cfg
-
 #
 # Bootloaders to build
 #

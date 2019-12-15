@@ -325,16 +325,6 @@ static void initSpi(){
     DMESG("SPI2 init");
 }
 
-void
-board_deinit(void)
-{
-	/* disable the power controller clock */
-	rcc_peripheral_disable_clock(&RCC_APB1ENR, RCC_APB1ENR_PWREN);
-
-	/* disable the AHB peripheral clocks */
-	RCC_AHB1ENR = 0x00100000; // XXX Magic reset number from STM32F4x reference manual
-}
-
 /**
   * @brief  Initializes the RCC clock configuration.
   *
@@ -348,43 +338,6 @@ clock_init(void)
 		pllm = OSC_FREQ;
 	clock_setup.pllm = pllm;
 	rcc_clock_setup_hse_3v3(&clock_setup);
-}
-
-/**
-  * @brief  Resets the RCC clock configuration to the default reset state.
-  * @note   The default reset state of the clock configuration is given below:
-  *            - HSI ON and used as system clock source
-  *            - HSE, PLL and PLLI2S OFF
-  *            - AHB, APB1 and APB2 prescaler set to 1.
-  *            - CSS, MCO1 and MCO2 OFF
-  *            - All interrupts disabled
-  * @note   This function doesn't modify the configuration of the
-  *            - Peripheral clocks
-  *            - LSI, LSE and RTC clocks
-  */
-void
-clock_deinit(void)
-{
-	/* Enable internal high-speed oscillator. */
-	rcc_osc_on(RCC_HSI);
-	rcc_wait_for_osc_ready(RCC_HSI);
-
-	/* Reset the RCC_CFGR register */
-	RCC_CFGR = 0x000000;
-
-	/* Stop the HSE, CSS, PLL, PLLI2S, PLLSAI */
-	rcc_osc_off(RCC_HSE);
-	rcc_osc_off(RCC_PLL);
-	rcc_css_disable();
-
-	/* Reset the RCC_PLLCFGR register */
-	RCC_PLLCFGR = 0x24003010; // XXX Magic reset number from STM32F4xx reference manual
-
-	/* Reset the HSEBYP bit */
-	rcc_osc_bypass_disable(RCC_HSE);
-
-	/* Reset the CIR register */
-	RCC_CIR = 0x000000;
 }
 
 void
@@ -420,36 +373,26 @@ led_off(unsigned led)
 # define SCB_CPACR (*((volatile uint32_t *) (((0xE000E000UL) + 0x0D00UL) + 0x088)))
 #endif
 
-void flash_bootloader(void);
-int hf2_mode = 0;
-
-void warning_screen(uint32_t);
-
 #define PWR_CR_LPLVDS (1 << 10)
 
-int screen_on;
+void playTone()
+{
+	for (int i=0;i<100;i++)
+	{
+		pin_set(CFG_PIN_JACK_SND, 1);
+		delay(1);
+		pin_set(CFG_PIN_JACK_SND, 0);
+		delay(1);
+	}	
+}
+
+extern const uint16_t test_img_128x128[][128];
 
 int
 main(void)
 {
-	bool try_boot = false;
-	unsigned timeout = BOOTLOADER_DELAY;	/* if nonzero, drop out of the bootloader after this time */
-
 	/* Enable the FPU before we hit any FP instructions */
 	SCB_CPACR |= ((3UL << 10 * 2) | (3UL << 11 * 2)); /* set CP10 Full Access and set CP11 Full Access */
-
-#if defined(BOARD_POWER_PIN_OUT)
-
-	/* Here we check for the app setting the POWER_DOWN_RTC_SIGNATURE
-	 * in this case, we reset the signature and wait to die
-	 */
-	if (board_get_rtc_signature(0) == POWER_DOWN_RTC_SIGNATURE) {
-		board_set_rtc_signature(0, 0);
-
-		while (1);
-	}
-
-#endif
 
 	/* do board-specific initialisation */
 	board_init();
@@ -459,139 +402,25 @@ main(void)
 
 	initSpi();
 
-	uint32_t bootArg = 0;
-	uint32_t bootSig = board_get_rtc_signature(&bootArg);
-
-	//if (hasScreen() && lookupCfg(CFG_BOOTLOADER_PROTECTION, 0) && (FLASH_OPTCR & 0x80030000)) {
-	//	warning_screen(bootSig);
-	//}
-
 	screen_init();
-	draw_drag();
+	//draw_drag();
+	drawImage(0,0,10,10,(uint16_t*)test_img_128x128);
 
-	DMESG("bootsig: %p", bootSig);
+	playTone();
+	draw_screen();
 
-	/*
-	* Clear the signature so that if someone resets us while we're
-	* in the bootloader we'll try to boot next time.
-	*/
-	if (bootSig)
-		board_set_rtc_signature(0, 0);
-
-	//bootSig = HF2_RTC_SIGNATURE;
-
-	if (bootSig == HF2_RTC_SIGNATURE) {
-		try_boot = false;
-		timeout = 2000;
-		hf2_mode = 1;
-	}
-
-	/*
-	 * Check the force-bootloader register; if we find the signature there, don't
-	 * try booting.
-	 */
-	if (bootSig == BOOT_RTC_SIGNATURE) {
-
-		/*
-		 * Don't even try to boot before dropping to the bootloader.
-		 */
-		try_boot = false;
-
-		/*
-		 * Don't drop out of the bootloader until something has been uploaded.
-		 */
-		timeout = 0;
-
-	}
-
-	if (bootSig == APP_RTC_SIGNATURE) {
-		try_boot = true;
-	}
-
-	/*
-	 * Check if the force-bootloader pins are strapped; if strapped,
-	 * don't try booting.
-	 */
-	if (board_test_force_pin()) {
-		try_boot = false;
-	}
-
-	/*
-	 * Check for USB connection - if present, don't try to boot, but set a timeout after
-	 * which we will fall out of the bootloader.
-	 *
-	 * If the force-bootloader pins are tied, we will stay here until they are removed and
-	 * we then time out.
-	 */
-#if 0
-#if defined(BOARD_USB_VBUS_SENSE_DISABLED)
-	try_boot = false;
-#else
-	if (gpio_get(BOARD_PORT_VBUS, BOARD_PIN_VBUS) != 0) {
-
-		/* don't try booting before we set up the bootloader */
-		try_boot = false;
-	}
-#endif
-#endif
-
-	/* Try to boot the app if we think we should just go straight there */
-	//if (try_boot) {
-		/* try to boot immediately */
-	//	jump_to_app();
-
-		/* booting failed, stay in the bootloader forever */
-	//	timeout = 0;
-	//}
-
-	// init bootflag, riven
-    if (pin_get(CFG_PIN_BTN_LEFT) == 0) {
-        bootFlag = 2;
-    }
-
-	if (bootFlag == 2 && hf2_mode == 0){
-        //start_systick();
-        DMESG("Draw drag flash mode");
-        screen_init();
-        draw_usbfs();
-        screen_on = 1;
-        // spi_test();
-	}
-
-    /* start the interface */
-    //cinit(BOARD_INTERFACE_CONFIG_USB, USB, bootFlag);
+	// if they hit reset the second time, go to app
+	board_set_rtc_signature(APP_RTC_SIGNATURE, 0);
+	board_set_rtc_signature(0, 0);
 
 	while (1) {
-		DMESG("enter bootloader, tmo=%d", timeout);
-
-		// if they hit reset the second time, go to app
-		board_set_rtc_signature(APP_RTC_SIGNATURE, 0);
 		
-		/* run the bootloader, come back after an app is uploaded or we time out */
-		//bootloader(timeout);
-
-		/* if the force-bootloader pins are strapped, just loop back */
-		if (board_test_force_pin()) {
-			continue;
-		}
-
-		board_set_rtc_signature(0, 0);
-
-		/* look to see if we can boot the app */
-		//jump_to_app();
-
-		/* launching the app failed - stay in the bootloader forever */
-		timeout = 0;
-
 		led_on(1);
-		pin_set(CFG_PIN_JACK_SND, 0);
-
-		delay(1);
-
+		led_off(2);
+		delay(100);
 		led_off(1);
-		pin_set(CFG_PIN_JACK_SND, 1);
-
-		delay(1);
+		led_on(2);
+		delay(100);
 	}
 }
 

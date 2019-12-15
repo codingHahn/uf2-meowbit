@@ -111,23 +111,4 @@ const uint32_t configData[] = {
 
 #endif
 
-
-#ifdef DEFINE_CUSTOM_LOGO
-
-const uint8_t kittenLogo[] = {
-32, 32, 68, 191, 191, 191, 142, 63, 149, 208, 143, 63, 124, 31, 140, 15, 124, 31, 139, 79, 124, 63, 140, 47, 126, 63, 64, 115, 113, 202, 135, 125, 211, 135, 113, 125, 203, 138, 7, 207, 138, 7, 207, 136, 79, 120, 202, 135, 63, 121, 203, 137, 31, 208, 139,
-213, 142, 209, 146, 206, 147, 205, 148, 203, 150, 201, 152, 199, 191, 191, 169
-};
-
-static void customLogo() {
-    printicon(2, 5, 15, kittenLogo);
-    print(35, 25, 1, "Meowbit");
-    print(10, 40, 1, "by kittenbot team");
-}
-
-#define CUSTOM_LOGO customLogo()
-
-#endif
-
-
 #endif /* BOARD_H */

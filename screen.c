@@ -258,6 +258,22 @@ static void printch4(int x, int y, int col, const uint8_t *fnt) {
     }
 }
 
+
+void drawImage(uint16_t x, uint16_t y, uint16_t w, uint16_t h, const uint16_t* data) {
+    if((x >= DISPLAY_WIDTH) || (y >= DISPLAY_HEIGHT)) return;
+    if((x + w - 1) >= DISPLAY_WIDTH) return;
+    if((y + h - 1) >= DISPLAY_HEIGHT) return;
+
+    setAddrWindow(x, y, x+w-1, y+h-1);
+
+    SET_DC(1);
+    SET_CS(0);
+
+    spi_transfer((uint8_t*)data, sizeof(uint16_t)*w*h);
+
+    SET_CS(1);
+}
+
 void printicon(int x, int y, int col, const uint8_t *icon) {
     int w = *icon++;
     int h = *icon++;
@@ -361,33 +377,6 @@ void drawBar(int y, int h, int c) {
     }
 }
 
-void draw_hf2() {
-    if (!hasScreen())
-        return;
-
-    print4(20, 22, 5, "<-->");
-    print(40, 110, 7, "flashing...");
-    draw_screen();
-}
-
-void draw_usbfs(){
-    drawBar(0, 52, 7);
-    drawBar(107, 14, 4);
-    print4(10, 10, 1, "File");
-    print(5, 70, 1, "USB <-> SPI Flash");
-    print(3, 110, 1, "meowbit.kittenbot.cc");
-    draw_screen();
-}
-
-void draw_hold_menu() {
-    if (!hasScreen())
-        return;
-
-    print4(20, 22, 6, "MENU");
-    print(10, 110, 1, "hold MENU to wake");
-    draw_screen();
-}
-
 static void print4border(int x, int y, int c, const char *str) {
     print4(x - 1, y - 1, 15, str);
     print4(x + 1, y - 1, 15, str);
@@ -397,25 +386,15 @@ static void print4border(int x, int y, int c, const char *str) {
 }
 
 void draw_drag() {
-    if (!hasScreen())
-        return;
 
     drawBar(0, 52, 10);
     drawBar(52, 55, 8);
     drawBar(107, 14, 4);
 
-    print4border(80, 5, 1, "ITD");
+    print4border(10, 5, 1, "ITD");
     print(23, 110, 1, "IT-Designers GmbH");
 
-    CUSTOM_LOGO;
-
-#define DRAG 70
-#define DRAGX 10
-    printicon(DRAGX + 20, DRAG + 5, 1, fileLogo);
-    printicon(DRAGX + 66, DRAG, 1, arrowLogo);
-    printicon(DRAGX + 108, DRAG, 1, pendriveLogo);
-    print(10, DRAG - 12, 1, "arcade.uf2");
-    print(98, DRAG - 12, 1, "ARCADE-F4");
+    printicon(10 + 20, 70 + 5, 1, fileLogo);
 
     draw_screen();
 }
