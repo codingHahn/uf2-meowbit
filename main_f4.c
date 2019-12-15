@@ -299,6 +299,9 @@ board_init(void)
 	setup_output_pin(CFG_PIN_LED);
 	setup_output_pin(CFG_PIN_LED1);
 
+	setup_output_pin(CFG_PIN_JACK_SND);
+
+
 	initSerialNumber();
 
 }
@@ -384,139 +387,6 @@ clock_deinit(void)
 	RCC_CIR = 0x000000;
 }
 
-uint32_t
-flash_func_sector_size(unsigned sector)
-{
-	if (sector < BOARD_FLASH_SECTORS) {
-		return flash_sectors[sector].size;
-	}
-
-	return 0;
-}
-
-static uint8_t erasedSectors[BOARD_FLASH_SECTORS];
-
-static bool is_blank(uint32_t addr, uint32_t size) {
-		for (unsigned i = 0; i < size; i += sizeof(uint32_t)) {
-			if (*(uint32_t*)(addr + i) != 0xffffffff) {
-				DMESG("non blank: %p i=%d/%d", addr, i, size);
-				return false;
-			}
-		}
-		return true;
-}
-
-void
-flash_write(uint32_t dst, const uint8_t *src, int len)
-{
-	// assume sector 0 (bootloader) is same size as sector 1
-	uint32_t addr = flash_func_sector_size(0) + (APP_LOAD_ADDRESS & 0xfff00000);
-	uint32_t sector = 0;
-	int erased = false;
-	uint32_t size = 0;
-
-	for (unsigned i = 0; i < BOARD_FLASH_SECTORS; i++) {
-		size = flash_func_sector_size(i);
-		if (addr + size > dst) {
-			sector = flash_sectors[i].sector_number;
-			erased = erasedSectors[i];
-			erasedSectors[i] = 1; // don't erase anymore - we will continue writing here!
-			break;
-		}
-		addr += size;
-	}
-
-	if (sector == 0) 
-		PANIC("invalid sector");
-
-
-    flash_unlock();
-
-	if (!erased && !is_blank(addr, size)) {
-		flash_erase_sector(sector, FLASH_CR_PROGRAM_X32);
-		if (!is_blank(addr, size))
-			PANIC("failed to erase!");
-	}
-
-    for (int i = 0; i < len; i += 4) {
-		flash_program_word(dst + i, *(uint32_t*)(src + i));
-    }
-
-	if (memcmp((void*)dst, src, len) != 0)
-		PANIC("failed to write");
-}
-
-void
-flash_func_erase_sector(unsigned sector)
-{
-	if (sector >= BOARD_FLASH_SECTORS || sector < BOARD_FIRST_FLASH_SECTOR_TO_ERASE) {
-		return;
-	}
-
-	/* Caculate the logical base address of the sector
-	 * flash_func_read_word will add APP_LOAD_ADDRESS
-	 */
-	uint32_t address = 0;
-
-	for (unsigned i = BOARD_FIRST_FLASH_SECTOR_TO_ERASE; i < sector; i++) {
-		address += flash_func_sector_size(i);
-	}
-
-	/* blank-check the sector */
-	unsigned size = flash_func_sector_size(sector);
-	bool blank = true;
-
-	for (unsigned i = 0; i < size; i += sizeof(uint32_t)) {
-		if (flash_func_read_word(address + i) != 0xffffffff) {
-			blank = false;
-			break;
-		}
-	}
-
-	/* erase the sector if it failed the blank check */
-	if (!blank) {
-		flash_erase_sector(flash_sectors[sector].sector_number, FLASH_CR_PROGRAM_X32);
-	}
-}
-
-void
-flash_func_write_word(uint32_t address, uint32_t word)
-{
-	flash_program_word(address + APP_LOAD_ADDRESS, word);
-}
-
-uint32_t
-flash_func_read_word(uint32_t address)
-{
-	if (address & 3) {
-		return 0;
-	}
-
-	return *(uint32_t *)(address + APP_LOAD_ADDRESS);
-}
-
-uint32_t
-flash_func_read_otp(uint32_t address)
-{
-	if (address & 3) {
-		return 0;
-	}
-
-	if (address > OTP_SIZE) {
-		return 0;
-	}
-
-	return *(uint32_t *)(address + OTP_BASE);
-}
-
-uint32_t
-flash_func_read_sn(uint32_t address)
-{
-	// read a byte out from unique chip ID area
-	// it's 12 bytes, or 3 words.
-	return *(uint32_t *)(address + UDID_START);
-}
-
 void
 led_on(unsigned led)
 {
@@ -556,63 +426,9 @@ int hf2_mode = 0;
 void warning_screen(uint32_t);
 
 #define PWR_CR_LPLVDS (1 << 10)
-void deepsleep() {
 
-	setup_output_pin(CFG_PIN_JACK_BZEN);
-	setup_output_pin(CFG_PIN_JACK_HPEN);
-	setup_output_pin(CFG_PIN_JACK_PWREN);
-	pin_set(CFG_PIN_JACK_PWREN, 0); // shutdown the power output
+int screen_on;
 
-	setup_output_pin(CFG_PIN_JACK_SND);
-	setup_output_pin(CFG_PIN_SPEAKER_AMP);
-
-	// this is needed for the BOOT0 circuit
-	setup_output_pin(CFG_PIN_BTN_MENU2);
-
-	setup_input_pin(CFG_PIN_BTN_A);
-	setup_input_pin(CFG_PIN_BTN_B);
-	setup_input_pin(CFG_PIN_BTN_LEFT);
-	setup_input_pin(CFG_PIN_BTN_RIGHT);
-	setup_input_pin(CFG_PIN_BTN_UP);
-	setup_input_pin(CFG_PIN_BTN_DOWN);
-
-  screen_sleep();
-
-	setup_input_pin(CFG_PIN_BTN_MENU);
-
-#if 0
-	RCC_AHB1LPENR = 0x1900F;
-  RCC_AHB2LPENR = 0x0;
-  RCC_APB1LPENR = 0x10000000;
-  RCC_APB2LPENR = 0x00004000;
-#endif
-
-	__disable_irq();
-	
-	for (;;) {
-		enable_exti(CFG_PIN_BTN_MENU);
-	
-		PWR_CR |= PWR_CR_FPDS | PWR_CR_LPDS | PWR_CR_LPLVDS;
-		SCB->SCR |= SCB_SCR_SLEEPDEEP;
-		asm("wfe");
-	
-		clock_init();
-	
-		int d = 0;
-		for (;;d += 50) {
-			screen_delay(50);
-			if (pin_get(CFG_PIN_BTN_MENU) == 1)
-				break;
-			if (d > 1000)
-				pin_set(CFG_PIN_DISPLAY_BL, 1);
-		}
-		if (d > 1000) {
-			resetIntoApp();
-		}
-	}
-}
-
-extern int screen_on;
 int
 main(void)
 {
@@ -642,44 +458,18 @@ main(void)
 	clock_init();
 
 	initSpi();
-	#ifdef BL_FLASHER
-	
-	flash_bootloader();
-
-	#else
 
 	uint32_t bootArg = 0;
 	uint32_t bootSig = board_get_rtc_signature(&bootArg);
 
-	if (hasScreen() && lookupCfg(CFG_BOOTLOADER_PROTECTION, 0) && (FLASH_OPTCR & 0x80030000)) {
-		warning_screen(bootSig);
-	}
+	//if (hasScreen() && lookupCfg(CFG_BOOTLOADER_PROTECTION, 0) && (FLASH_OPTCR & 0x80030000)) {
+	//	warning_screen(bootSig);
+	//}
+
+	screen_init();
+	draw_drag();
 
 	DMESG("bootsig: %p", bootSig);
-
-
-	if (bootSig == APP_RTC_SIGNATURE && bootArg == SLEEP_RTC_ARG) {
-		// next time show instructions
-		board_set_rtc_signature(APP_RTC_SIGNATURE, SLEEP2_RTC_ARG);
-		deepsleep();
-	}
-
-	if (bootSig == APP_RTC_SIGNATURE && bootArg == SLEEP2_RTC_ARG) {
-		screen_init();
-		draw_hold_menu();
-		setup_input_pin(CFG_PIN_BTN_MENU);
-		for (int i = 0; i < 200; ++i) {
-			screen_delay(10);
-			// if they touch MENU while the instruction screen is on,
-			// just stop the sleep and boot into app
-			if (pin_get(CFG_PIN_BTN_MENU) == 0) {
-				bootArg = 0;
-				break;
-			}
-		}
-		if (bootArg)
-			deepsleep();
-	}
 
 	/*
 	* Clear the signature so that if someone resets us while we're
@@ -746,13 +536,13 @@ main(void)
 #endif
 
 	/* Try to boot the app if we think we should just go straight there */
-	if (try_boot) {
+	//if (try_boot) {
 		/* try to boot immediately */
-		jump_to_app();
+	//	jump_to_app();
 
 		/* booting failed, stay in the bootloader forever */
-		timeout = 0;
-	}
+	//	timeout = 0;
+	//}
 
 	// init bootflag, riven
     if (pin_get(CFG_PIN_BTN_LEFT) == 0) {
@@ -760,7 +550,7 @@ main(void)
     }
 
 	if (bootFlag == 2 && hf2_mode == 0){
-        start_systick();
+        //start_systick();
         DMESG("Draw drag flash mode");
         screen_init();
         draw_usbfs();
@@ -769,7 +559,7 @@ main(void)
 	}
 
     /* start the interface */
-    cinit(BOARD_INTERFACE_CONFIG_USB, USB, bootFlag);
+    //cinit(BOARD_INTERFACE_CONFIG_USB, USB, bootFlag);
 
 	while (1) {
 		DMESG("enter bootloader, tmo=%d", timeout);
@@ -778,7 +568,7 @@ main(void)
 		board_set_rtc_signature(APP_RTC_SIGNATURE, 0);
 		
 		/* run the bootloader, come back after an app is uploaded or we time out */
-		bootloader(timeout);
+		//bootloader(timeout);
 
 		/* if the force-bootloader pins are strapped, just loop back */
 		if (board_test_force_pin()) {
@@ -788,25 +578,20 @@ main(void)
 		board_set_rtc_signature(0, 0);
 
 		/* look to see if we can boot the app */
-		jump_to_app();
+		//jump_to_app();
 
 		/* launching the app failed - stay in the bootloader forever */
 		timeout = 0;
+
+		led_on(1);
+		pin_set(CFG_PIN_JACK_SND, 0);
+
+		delay(1);
+
+		led_off(1);
+		pin_set(CFG_PIN_JACK_SND, 1);
+
+		delay(1);
 	}
-
-	#endif
 }
 
-void flushFlash(void);
-
-void resetIntoApp() {
-	flushFlash();
-	board_set_rtc_signature(APP_RTC_SIGNATURE, 0);
-	scb_reset_system();
-}
-
-void resetIntoBootloader() {
-	flushFlash();
-	board_set_rtc_signature(BOOT_RTC_SIGNATURE, 0);
-	scb_reset_system();
-}

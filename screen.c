@@ -404,9 +404,8 @@ void draw_drag() {
     drawBar(52, 55, 8);
     drawBar(107, 14, 4);
 
-    print4border(109, 5, 1, "F4");
-    print(112, 40, 8, "v" UF2_VERSION);
-    print(23, 110, 1, "arcade.makecode.com");
+    print4border(80, 5, 1, "ITD");
+    print(23, 110, 1, "IT-Designers GmbH");
 
     CUSTOM_LOGO;
 
