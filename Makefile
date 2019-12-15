@@ -13,9 +13,6 @@ export LIBOPENCM3	?= $(wildcard libopencm3)
 #
 export CC	    = arm-none-eabi-gcc
 export OBJCOPY	= arm-none-eabi-objcopy
-export OPENOCD	?= openocd
-
-JTAGCONFIG ?= interface/stlink-v2.cfg
 
 export BOARD ?= meowbit
 -include boards/$(BOARD)/board.mk
@@ -150,32 +147,12 @@ BMP = $(shell ls -1 /dev/cu.usbmodem*1 | head -1)
 BMP_ARGS = -ex "target extended-remote $(BMP)" -ex "mon tpwr enable" -ex "mon swdp_scan" -ex "attach 1"
 GDB = arm-none-eabi-gdb
 
-flash-ocd:
-	$(OPENOCDALL) -c "program build/$(BOARD)/bootloader.elf verify reset exit "
-
-flash-bootloader:
-	$(GDB) $(BMP_ARGS) -ex "load" -ex "quit" build/$(BOARD)/bootloader.elf
-
-
-gdb:
-	$(GDB) $(BMP_ARGS) build/$(BOARD)/bootloader.elf
-
 #
 # Show sizes
 #
 .PHONY: sizes
 sizes:
 	@-find build/*/ -name '*.elf' -type f | xargs size 2> /dev/null || :
-
-drop:
-	for f in `cd boards; ls` ; do $(MAKE) BOARD=$$f ; done
-	cd build; 7z a uf2-stm32f.zip */bootloader.elf */bootloader.bin */flasher.uf2
-#
-# Binary management
-#
-.PHONY: deploy
-deploy:
-	zip -j Bootloader.zip build/*/*.bin
 
 #
 # Submodule management
