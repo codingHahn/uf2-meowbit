@@ -1,6 +1,6 @@
-# UF2 Bootloaders for STM32
+# Demo App for Meowbit based on UF2 Bootloaders for STM32
 
-This implements USB mass storage flashing using [UF2 format](https://github.com/Microsoft/uf2)
+This is a simple demo that creates an app in UF2 format for meowbit.
 
 ## Big Notice
 
@@ -27,18 +27,12 @@ To build just run ``make`` in this folder.
 This will fetch git submodules if needed and build libopenocm3
 (which only happens once).
 
-The binaries will be in `build/BOARDNAME`. 
+The binaries will be in `build/meowbit`. 
 The following files will be built:
 * `bootloader.elf` - for use with JTAG adapters
 * `bootloader.bin` - for direct onboard upgrading
 * `flasher.uf2` - if you already have a UF2 bootloader, you can just drop this on board and it will update the bootloader
 * `flasher16.uf2` - this is similar, but if you have an older UF2 bootloader on the board, that expects the app to start at 16k (`0x08004000`)
-
-## Adding board
-
-Start from `f401` (for 64 pin package) or `f401c` (for 48 pin package) generic board.
-Copy the folder and modify `board.h`, follow instructions at 
-https://arcade.makecode.com/hardware/adding#generating-bootloader
 
 ## License
 
