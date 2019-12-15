@@ -139,12 +139,6 @@ static int ledToBlink = LED_BOOTLOADER;
 void sys_tick_handler(void) {
     unsigned i;
 
-    if (bootFlag != 2){
-        ghostfat_1ms();
-    } else {
-        flush_1ms();
-    }
-
     for (i = 0; i < NTIMERS; i++)
         if (timer[i] > 0) {
             timer[i]--;
