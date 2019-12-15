@@ -53,7 +53,7 @@ export FLAGS		 = -std=gnu99 \
 			   -Wno-unused \
 			   -Werror
 
-export COMMON_SRCS	 = bl.c usb.c usb_msc.c spiflash.c ghostfat.c dmesg.c screen.c images.c settings.c hf2.c support.c webusb.c winusb.c util.c flashwarning.c
+export COMMON_SRCS	 = bl.c spiflash.c ghostfat.c dmesg.c screen.c images.c settings.c hf2.c support.c util.c flashwarning.c
 
 
 SRCS		 = $(COMMON_SRCS) main_$(FN).c

@@ -51,18 +51,15 @@
 #include <libopencm3/cm3/systick.h>
 
 #include "bl.h"
-#include "usb.h"
 
 extern unsigned bootFlag;
 
 inline void cinit(void *config, uint8_t interface, unsigned flag) {
-    if (interface == USB) {
-        return usb_cinit(flag);
-    }
+
 }
 
 inline void cfini(void) {
-    usb_cfini();
+
 }
 
 static enum led_state { LED_BLINK, LED_ON, LED_OFF } _led_state;
@@ -272,7 +269,5 @@ void bootloader(unsigned timeout) {
                     draw_drag();
             }
         }
-
-        usb_callback();
     }
 }
