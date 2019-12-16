@@ -17,7 +17,7 @@ uint16_t rgb888torgb565(uint8_t red, uint8_t green, uint8_t blue)
 
 int main(int argc,char **argv)
 {
-#define QuantumScale  ((MagickRealType) 1.0/(MagickRealType) QuantumRange)
+//#define QuantumScale  ((MagickRealType) 1.0/(MagickRealType) QuantumRange)
 #define SigmoidalContrast(x) \
   (QuantumRange*(1.0/(1+exp(10.0*(0.5-QuantumScale*x)))-0.0066928509)*1.0092503)
 #define ThrowWandException(wand) \
@@ -96,7 +96,7 @@ int main(int argc,char **argv)
 
 
   fprintf(fp,"#include \"stdint.h\"\n");
-  fprintf(fp,"uint16_t usImg[] = {\n");
+  fprintf(fp,"const uint16_t usImg[] = {\n");
 
   for (y=0; y < (long) MagickGetImageHeight(image_wand); y++)
   {
