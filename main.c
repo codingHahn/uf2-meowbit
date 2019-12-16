@@ -20,6 +20,7 @@
 
 #include "bl.h"
 #include <string.h>
+#include "img.h"
 
 /* flash parameters that we should not really know */
 static struct {
@@ -386,8 +387,6 @@ void playTone()
 	}	
 }
 
-extern const uint16_t test_img_128x128[][128];
-
 int
 main(void)
 {
@@ -404,10 +403,9 @@ main(void)
 
 	screen_init();
 	//draw_drag();
-	drawImage(0,0,10,10,(uint16_t*)test_img_128x128);
+	drawImage(0,0,45,45,usImg);
 
 	playTone();
-	draw_screen();
 
 	// if they hit reset the second time, go to app
 	board_set_rtc_signature(APP_RTC_SIGNATURE, 0);

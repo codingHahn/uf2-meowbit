@@ -186,6 +186,8 @@ static void setAddrWindow(int x, int y, int w, int h) {
     uint8_t cmd1[] = {ST7735_CASET, 0, (uint8_t)y, 0, (uint8_t)(y + h - 1)};
     sendCmd(cmd1, sizeof(cmd1));
     sendCmd(cmd0, sizeof(cmd0));
+    cmdBuf[0] = ST7735_RAMWR;
+    sendCmd(cmdBuf, 1);
 }
 
 static void configure(uint8_t madctl, uint32_t frmctr1) {
@@ -264,7 +266,7 @@ void drawImage(uint16_t x, uint16_t y, uint16_t w, uint16_t h, const uint16_t* d
     if((x + w - 1) >= DISPLAY_WIDTH) return;
     if((y + h - 1) >= DISPLAY_HEIGHT) return;
 
-    setAddrWindow(x, y, x+w-1, y+h-1);
+    setAddrWindow(x, y, w, h);
 
     SET_DC(1);
     SET_CS(0);
