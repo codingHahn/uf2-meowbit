@@ -403,22 +403,47 @@ main(void)
 
 	screen_init();
 	//draw_drag();
-	drawImage(0,0,45,45,usImg);
 
 	playTone();
 
 	// if they hit reset the second time, go to app
 	board_set_rtc_signature(APP_RTC_SIGNATURE, 0);
 	board_set_rtc_signature(0, 0);
-
+	int x=0;
+	int y=0;
+	bool right=true;
+	bool down=true;
 	while (1) {
+		if (x==0)
+			right=true;
+		else if (x==100)
+		    right=false;
 		
-		led_on(1);
-		led_off(2);
-		delay(100);
-		led_off(1);
-		led_on(2);
-		delay(100);
+		if (y==0)
+			down=true;
+		else if (y==80)
+		    down=false;
+
+		if (right) 
+			drawImage(x++,0,45,45,usImg);
+		else 
+			drawImage(x--,0,45,45,usImg);
+
+		if (down) 
+			drawImage(0,y++,45,45,usImg);
+		else 
+			drawImage(0,y--,45,45,usImg);
+
+		drawImage(x,y,45,45,usImg);
+		drawImage(x,y,45,45,usImg);
+		drawImage(x,y,45,45,usImg);
+
+		//led_on(1);
+		//led_off(2);
+		//delay(1);
+		//led_off(1);
+		//led_on(2);
+		//delay(1);
 	}
 }
 

@@ -73,6 +73,15 @@ int main(int argc,char **argv)
   status=MagickReadImage(image_wand,argv[1]);
   if (status == MagickFalse)
     ThrowWandException(image_wand);
+
+  PixelWand *background;
+  background=NewPixelWand();
+  PixelSetColor(background,"#000000");
+
+  status=MagickRotateImage(image_wand,background,-90.0);
+  if (status == MagickFalse)
+    ThrowWandException(image_wand);
+
   /*
     Sigmoidal non-linearity contrast control.
   */
@@ -80,8 +89,14 @@ int main(int argc,char **argv)
   if ((iterator == (PixelIterator *) NULL))
     ThrowWandException(image_wand);
 
-  printf("#include \"<stdint.h>\"\n");
-  printf("uint16_t usImg[] {\n");
+  char buffer[80];
+  snprintf(buffer, 80, "%s.c",argv[1]);
+
+  FILE *fp = fopen(buffer,"w");
+
+
+  fprintf(fp,"#include \"stdint.h\"\n");
+  fprintf(fp,"uint16_t usImg[] = {\n");
 
   for (y=0; y < (long) MagickGetImageHeight(image_wand); y++)
   {
@@ -98,21 +113,22 @@ int main(int argc,char **argv)
       }
       else
       {
-	printf(",");
+	fprintf(fp,",");
         if (first%10==0)
-          printf("\n");
+          fprintf(fp,"\n");
       }
-      printf("0x%04X", rgb888torgb565((uint8_t)pixel.red,(uint8_t)pixel.green,(uint8_t)pixel.blue));
+      fprintf(fp,"0x%04X", rgb888torgb565((uint8_t)pixel.red,(uint8_t)pixel.green,(uint8_t)pixel.blue));
       first++;
     }
   }
   if (y < (long) MagickGetImageHeight(image_wand))
     ThrowWandException(image_wand);
 
-  printf("};\n");
+  fprintf(fp,"};\n");
 
   iterator=DestroyPixelIterator(iterator);
   image_wand=DestroyMagickWand(image_wand);
   MagickWandTerminus();
+  fclose(fp);
   return(0);
 }
