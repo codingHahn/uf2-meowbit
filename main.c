@@ -424,23 +424,30 @@ main(void)
 		else if (y==80)
 		    down=false;
 
-		if (right) 
-			drawImage(x++,0,45,45,usImg);
-		else 
-			drawImage(x--,0,45,45,usImg);
-
-		if (down) 
-			drawImage(0,y++,45,45,usImg);
-		else 
-			drawImage(0,y--,45,45,usImg);
-
-		drawImage(x,y,45,45,usImg);
-		drawImage(x,y,45,45,usImg);
-		drawImage(x,y,45,45,usImg);
-
+		if (right)
+		{
+			//drawImage(x,0,45,45,emptyImg);
+			drawImage(++x,0,45,45,hamImg);
+		}
+		else
+		{ 
+			//drawImage(x,0,45,45,emptyImg);
+			drawImage(--x,0,45,45,hamImg);
+		}
+		if (down)
+		{ 
+			//drawImage(0,y,45,45,emptyImg);
+			drawImage(0,++y,45,45,hamImg);
+		}
+		else
+		{ 
+			//drawImage(0,y,45,45,emptyImg);
+			drawImage(0,--y,45,45,hamImg);
+		}
+		
 		//led_on(1);
 		//led_off(2);
-		//delay(1);
+		//delay(100);
 		//led_off(1);
 		//led_on(2);
 		//delay(1);

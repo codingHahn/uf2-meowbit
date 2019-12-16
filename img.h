@@ -17,6 +17,7 @@
 #ifndef	__IMG_H_
 #define	__IMG_H_
 
-extern const uint16_t usImg[];
+extern const uint16_t hamImg[];
+extern const uint16_t emptyImg[];
 
 #endif	// __IMG_H_
