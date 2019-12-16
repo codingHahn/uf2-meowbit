@@ -305,6 +305,7 @@ board_init(void)
 
 	initSerialNumber();
 
+	start_systick();
 }
 
 static void initSpi(){

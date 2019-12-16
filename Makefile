@@ -48,7 +48,7 @@ export FLAGS		 = -std=gnu99 \
 			   -Wno-unused \
 			   -Werror
 
-export COMMON_SRCS	 = bl.c test.bmp.c empty.bmp.c ghostfat.c dmesg.c screen.c images.c settings.c hf2.c support.c util.c flashwarning.c
+export COMMON_SRCS	 = bl.c test.bmp.c empty.bmp.c ghostfat.c dmesg.c screen.c images.c settings.c hf2.c support.c util.c
 
 
 SRCS		 = $(COMMON_SRCS) main.c
@@ -97,7 +97,7 @@ ELF		 = $(BUILD_DIR)/bootloader.elf
 BINARY		 = $(BUILD_DIR)/bootloader.bin
 UF2		 = $(BUILD_DIR)/flasher.uf2
 
-FL_OBJS = $(addprefix $(BUILD_DIR)/, test.bmp.o empty.bmp.o flasher.o main-flasher.o util.o dmesg.o screen.o images.o settings.o)
+FL_OBJS = $(addprefix $(BUILD_DIR)/, bl.o test.bmp.o empty.bmp.o main-flasher.o util.o dmesg.o screen.o images.o settings.o)
 
 do-build:		$(BUILD_DIR) $(ELF) $(BINARY) $(UF2)
 
@@ -161,7 +161,7 @@ $(OCM3FILE):
 
 .PHONY: checksubmodules
 checksubmodules: updatesubmodules
-	$(Q) ($(BL_BASE)/Tools/check_submodules.sh)
+	$(Q) ($(BL_BASE)/tools/check_submodules.sh)
 
 .PHONY: updatesubmodules
 updatesubmodules:
