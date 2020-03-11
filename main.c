@@ -4,9 +4,13 @@
  */
 
 #include "hw_config.h"
+#include "bl.h"
+#include <string.h>
+#include "img.h"
 
-#include <stdlib.h>
+
 #include <libopencm3/stm32/rcc.h>
+#include <libopencm3/stm32/i2c.h>
 #include <libopencm3/stm32/gpio.h>
 #include <libopencm3/stm32/spi.h>
 #include <libopencm3/stm32/flash.h>
@@ -18,9 +22,13 @@
 
 #include <libopencmsis/core_cm3.h>
 
-#include "bl.h"
-#include <string.h>
-#include "img.h"
+const int I2C_ADDR = 0x74;
+short buf[119] = {0};
+
+void clear()
+{
+	memset(buf, 0, sizeof(short) *119);
+}
 
 /* flash parameters that we should not really know */
 static struct {
@@ -310,21 +318,43 @@ board_init(void)
 
 static void initSpi(){
     // spi2 pin pb12~15
-    rcc_periph_clock_enable(RCC_GPIOB);
-    rcc_periph_clock_enable(RCC_SPI2);
-    setup_output_pin(CFG_PIN_FLASH_CS);
-    pin_set(CFG_PIN_FLASH_CS, 1);
+    //rcc_periph_clock_enable(RCC_GPIOB);
+    //rcc_periph_clock_enable(RCC_SPI2);
+    //setup_output_pin(CFG_PIN_FLASH_CS);
+    //pin_set(CFG_PIN_FLASH_CS, 1);
 
-    gpio_mode_setup(GPIOB, GPIO_MODE_AF, GPIO_PUPD_NONE, GPIO13 | GPIO14 | GPIO15);
-    gpio_set_af(GPIOB, GPIO_AF5, GPIO13 | GPIO14 | GPIO15);
+    //gpio_mode_setup(GPIOB, GPIO_MODE_AF, GPIO_PUPD_NONE, GPIO13 | GPIO14 | GPIO15);
+    //gpio_set_af(GPIOB, GPIO_AF5, GPIO13 | GPIO14 | GPIO15);
 
-    spi_reset(SPI2);
-    spi_init_master(SPI2, SPI_CR1_BAUDRATE_FPCLK_DIV_4, SPI_CR1_CPOL_CLK_TO_1_WHEN_IDLE,
-                    SPI_CR1_CPHA_CLK_TRANSITION_2, SPI_CR1_DFF_8BIT, SPI_CR1_MSBFIRST);
-    spi_enable_software_slave_management(SPI2);
-    spi_set_nss_high(SPI2);
-    spi_enable(SPI2);
+    //spi_reset(SPI2);
+    //spi_init_master(SPI2, SPI_CR1_BAUDRATE_FPCLK_DIV_4, SPI_CR1_CPOL_CLK_TO_1_WHEN_IDLE,
+    //                SPI_CR1_CPHA_CLK_TRANSITION_2, SPI_CR1_DFF_8BIT, SPI_CR1_MSBFIRST);
+    //spi_enable_software_slave_management(SPI2);
+    //spi_set_nss_high(SPI2);
+    //spi_enable(SPI2);
     DMESG("SPI2 init");
+}
+
+static void initI2C(){
+	rcc_periph_clock_enable(RCC_I2C1);
+	rcc_periph_clock_enable(RCC_GPIOB);
+	
+
+	i2c_reset(I2C1);
+	/* Setup GPIO pin GPIO_USART2_TX/GPIO9 on GPIO port A for transmit. */
+	gpio_mode_setup(GPIOB, GPIO_MODE_AF, GPIO_PUPD_NONE, GPIO6 | GPIO7);
+	gpio_set_af(GPIOB, GPIO_AF4, GPIO6 | GPIO7);
+	i2c_peripheral_disable(I2C1);
+	i2c_set_standard_mode(I2C1);
+	/* HSI is at 8Mhz */
+	i2c_peripheral_enable(I2C1);
+
+}
+
+static void light_led_matrix(){
+	uint8_t data[3] = { 0b00000000, 0b00000000, 0b00000000};
+	i2c_transfer7(I2C1, I2C_ADDR, &data, 3, NULL, 0);
+
 }
 
 /**
@@ -388,6 +418,12 @@ void playTone()
 	}	
 }
 
+void show();
+void set_pixel(int row, int col);
+
+void show()
+{
+}
 int
 main(void)
 {
@@ -401,11 +437,12 @@ main(void)
 	clock_init();
 
 	initSpi();
+	initI2C();
 
 	screen_init();
 	//draw_drag();
 
-	playTone();
+	//playTone();
 
 	// if they hit reset the second time, go to app
 	board_set_rtc_signature(APP_RTC_SIGNATURE, 0);
@@ -414,6 +451,8 @@ main(void)
 	int y=0;
 	bool right=true;
 	bool down=true;
+	show();
+	light_led_matrix();
 	while (1) {
 		if (x==0)
 			right=true;
