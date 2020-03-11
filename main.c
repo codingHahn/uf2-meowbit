@@ -183,7 +183,7 @@ static struct rcc_clock_scale clock_setup = {
 	.hpre = RCC_CFGR_HPRE_DIV_NONE,
 	.ppre1 = RCC_CFGR_PPRE_DIV_2,
 	.ppre2 = RCC_CFGR_PPRE_DIV_NONE,
-	.flash_config = FLASH_ACR_ICE | FLASH_ACR_DCE | FLASH_ACR_LATENCY_2WS,
+	.flash_config = FLASH_ACR_ICEN | FLASH_ACR_DCEN | FLASH_ACR_LATENCY_2WS,
 	.ahb_frequency  = 84000000,
 #else
 	.pllp = 2,
@@ -196,7 +196,7 @@ static struct rcc_clock_scale clock_setup = {
 	.ppre2 = RCC_CFGR_PPRE_DIV_2,
 	.flash_config = FLASH_ACR_ICE | FLASH_ACR_DCE | FLASH_ACR_LATENCY_5WS,
 #endif
-	.power_save = 0,
+	.voltage_scale = PWR_SCALE1,
 	.apb1_frequency = 42000000,
 	.apb2_frequency = 84000000,
 };
@@ -353,7 +353,7 @@ static void initI2C(){
 
 static void light_led_matrix(){
 	uint8_t data[3] = { 0b00000000, 0b00000000, 0b00000000};
-	i2c_transfer7(I2C1, I2C_ADDR, &data, 3, NULL, 0);
+	i2c_transfer7(I2C1, I2C_ADDR, data, 3, NULL, 0);
 
 }
 
@@ -369,7 +369,7 @@ clock_init(void)
 	if (pllm < 4 || pllm > 60 || pllm * 1000000 != BOOT_SETTINGS->hseValue)
 		pllm = OSC_FREQ;
 	clock_setup.pllm = pllm;
-	rcc_clock_setup_hse_3v3(&clock_setup);
+	rcc_clock_setup_pll(&clock_setup);
 }
 
 void
