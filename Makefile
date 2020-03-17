@@ -33,7 +33,6 @@ EXTRAFLAGS ?= -D$(CPUTYPE)
 # Common configuration
 #
 export FLAGS		 = -std=gnu99 \
-			   -Os \
 			   -g \
 			   -Wundef \
 			   -Wall \
@@ -99,7 +98,7 @@ UF2		 = $(BUILD_DIR)/flasher.uf2
 
 FL_OBJS = $(addprefix $(BUILD_DIR)/, bl.o test.bmp.o empty.bmp.o main-flasher.o util.o dmesg.o screen.o images.o settings.o)
 
-do-build:		$(BUILD_DIR) $(ELF) $(BINARY) $(UF2)
+do-build:		$(BUILD_DIR) $(ELF) $(BINARY) $(UF2) $(DBGFILE)
 
 # Compile and generate dependency files
 $(BUILD_DIR)/%.o:	%.c
@@ -128,6 +127,8 @@ $(UF2): $(FL_OBJS) $(BINARY)
 	$(CC) -o $(BUILD_DIR)/flasher16.elf $(FL_OBJS) $(FLAGS:.ld=-flasher16.ld)
 	$(OBJCOPY) -O binary $(BUILD_DIR)/flasher16.elf $(BUILD_DIR)/flasher16.bin
 	python uf2/utils/uf2conv.py -c -f 0x57755a57 -b 0x08008000 $(BUILD_DIR)/flasher16.bin -o $(BUILD_DIR)/flasher16.uf2
+
+$(DBGFILE): $(OBJCOPY) --only-keep-debug $(BUILD_DIR)/flasher.elf $(BUILD_DIR)/debug
 
 # Dependencies for .o files
 -include $(DEPS)

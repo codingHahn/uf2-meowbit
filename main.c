@@ -22,7 +22,7 @@
 
 #include <libopencmsis/core_cm3.h>
 
-const int I2C_ADDR = 0x74;
+const uint8_t I2C_ADDR = 0x74;
 short buf[119] = {0};
 
 void clear()
@@ -340,20 +340,20 @@ static void initI2C(){
 	rcc_periph_clock_enable(RCC_GPIOB);
 	
 
-	i2c_reset(I2C1);
-	/* Setup GPIO pin GPIO_USART2_TX/GPIO9 on GPIO port A for transmit. */
-	gpio_mode_setup(GPIOB, GPIO_MODE_AF, GPIO_PUPD_NONE, GPIO6 | GPIO7);
-	gpio_set_af(GPIOB, GPIO_AF4, GPIO6 | GPIO7);
 	i2c_peripheral_disable(I2C1);
-	i2c_set_standard_mode(I2C1);
+	i2c_reset(I2C1);
+	gpio_mode_setup(GPIOB, GPIO_MODE_AF, GPIO_PUPD_PULLUP, GPIO6 | GPIO7);
+	gpio_set_af(GPIOB, GPIO_AF4, GPIO6 | GPIO7);
+	i2c_set_speed(I2C1, i2c_speed_sm_100k, 16);
 	/* HSI is at 8Mhz */
 	i2c_peripheral_enable(I2C1);
 
 }
 
 static void light_led_matrix(){
-	uint8_t data[3] = { 0b00000000, 0b00000000, 0b00000000};
-	i2c_transfer7(I2C1, I2C_ADDR, data, 3, NULL, 0);
+	uint8_t data[3] = { 0xAA, 0xAA, 0xAA};
+	uint8_t temp;
+	i2c_transfer7(I2C1, I2C_ADDR, data, 3, &temp, 1);
 
 }
 
@@ -485,12 +485,12 @@ main(void)
 			drawImage(0,--y,45,45,hamImg);
 		}
 		
-		//led_on(1);
-		//led_off(2);
-		//delay(100);
-		//led_off(1);
-		//led_on(2);
-		//delay(1);
+		led_on(1);
+		led_off(2);
+		delay(100);
+		led_off(1);
+		led_on(2);
+		delay(1);
 	}
 }
 
