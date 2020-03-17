@@ -350,12 +350,57 @@ static void initI2C(){
 
 }
 
+/*
+ * Inspiried by the Adafruit lib for the IS31FL3731
+ * basically a C port minus a few functions
+ */
+#define SCROLL_BANK_FUNCTIONREG 0x0B // page 'nine'
+#define SCROLL_REG_SHUTDOWN 0x0A
+#define SCROLL_REG_CONFIG 0x00
+#define SCROLL_REG_CONFIG_PICTUREMODE 0x00
+#define SCROLL_REG_PICTURE_FRAME 0x01
+#define SCROLL_CMD_REG 0xFD
+
+static void select_bank(uint8_t bank)
+{
+	uint8_t data[2];
+	data[0] = SCROLL_CMD_REG;
+	data[1] = bank;
+	i2c_transfer7(I2C1, I2C_ADDR, data, 2, NULL, 0);
+}
+
+static void write_register8(uint8_t bank, uint8_t reg, uint8_t data)
+{
+	select_bank(bank);
+	uint8_t buf[2];
+	buf[0] = reg;
+	buf[1] = data;
+
+	i2c_transfer7(I2C1, I2C_ADDR, buf, 2, NULL, 0);
+}
+
 static void light_led_matrix(){
-	uint8_t data[3] = { 0xAA, 0xAA, 0xAA};
-	uint8_t temp;
-	i2c_transfer7(I2C1, I2C_ADDR, data, 3, &temp, 1);
+
+	write_register8(SCROLL_BANK_FUNCTIONREG, SCROLL_REG_SHUTDOWN, 0x00);
+	delay(10);
+	write_register8(SCROLL_BANK_FUNCTIONREG, SCROLL_REG_SHUTDOWN, 0x01);
+	delay(10);
+
+	write_register8(SCROLL_BANK_FUNCTIONREG, SCROLL_REG_CONFIG, SCROLL_REG_CONFIG_PICTUREMODE);
+
+	write_register8(SCROLL_BANK_FUNCTIONREG,  SCROLL_REG_PICTURE_FRAME, 0x00);
+
+	for(uint8_t f = 0; f < 8; f++)
+	{
+		for(uint8_t i = 0; i <= 0x11; i++)
+		{
+			write_register8(f, i, 0xff);
+		}
+	}
+
 
 }
+
 
 /**
   * @brief  Initializes the RCC clock configuration.
@@ -485,12 +530,12 @@ main(void)
 			drawImage(0,--y,45,45,hamImg);
 		}
 		
-		led_on(1);
-		led_off(2);
-		delay(100);
-		led_off(1);
-		led_on(2);
-		delay(1);
+		//led_on(1);
+		//led_off(2);
+		//delay(100);
+		//led_off(1);
+		//led_on(2);
+		//delay(1);
 	}
 }
 
