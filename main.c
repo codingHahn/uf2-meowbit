@@ -342,8 +342,8 @@ static void initI2C(){
 
 	i2c_peripheral_disable(I2C1);
 	i2c_reset(I2C1);
-	gpio_mode_setup(GPIOB, GPIO_MODE_AF, GPIO_PUPD_PULLUP, GPIO6 | GPIO7);
 	gpio_set_af(GPIOB, GPIO_AF4, GPIO6 | GPIO7);
+	gpio_mode_setup(GPIOB, GPIO_MODE_AF, GPIO_PUPD_NONE, GPIO6 | GPIO7);
 	i2c_set_speed(I2C1, i2c_speed_sm_100k, 16);
 	/* HSI is at 8Mhz */
 	i2c_peripheral_enable(I2C1);
