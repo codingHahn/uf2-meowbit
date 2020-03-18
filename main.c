@@ -23,12 +23,6 @@
 #include <libopencmsis/core_cm3.h>
 
 const uint8_t I2C_ADDR = 0x74;
-short buf[119] = {0};
-
-void clear()
-{
-	memset(buf, 0, sizeof(short) *119);
-}
 
 /* flash parameters that we should not really know */
 static struct {
@@ -379,8 +373,55 @@ static void write_register8(uint8_t bank, uint8_t reg, uint8_t data)
 	i2c_transfer7(I2C1, I2C_ADDR, buf, 2, NULL, 0);
 }
 
-static void light_led_matrix(){
+uint8_t reverse(uint8_t b) {
+   b = (b & 0xF0) >> 4 | (b & 0x0F) << 4;
+   b = (b & 0xCC) >> 2 | (b & 0x33) << 2;
+   b = (b & 0xAA) >> 1 | (b & 0x55) << 1;
+   return b;
+}
 
+static void clear(){
+	for(uint8_t frame = 0; frame < 8; frame++)
+	{
+		uint8_t charcount = 0;
+		uint8_t row = 0;
+		for(uint8_t i = 0; i <= 0x11; i++)
+		{
+			if(i % 5 == 0 && i != 0)
+				charcount++;
+			if(row % 8 == 0)
+				row = 0;
+			write_register8(frame, i, 0x00);
+		}
+	}
+}
+
+void show(uint8_t* buffer, uint8_t length){
+	uint8_t tmp;
+	uint8_t result[length];
+	result[0] = buffer[0];
+	for(uint8_t i = 1; i < 9; i++)
+	{
+		result[2*i] = buffer[i];
+	}
+	for(uint8_t i = 9; i < 17; i++)
+	{
+		result[((i-9)*2)+1] = buffer[i];
+	}
+	buffer = result;
+	//swap(&buffer);
+	for(uint8_t i = 0; i < length; i++)
+	{
+		if(i % 2 != 0)
+			buffer[i] = reverse(buffer[i])>>1;
+		else{
+			if(i < 7){
+				tmp = buffer[i];
+				buffer[i] = buffer[16-i];
+				buffer[16-i] = tmp;
+			}
+		}
+	}
 	write_register8(SCROLL_BANK_FUNCTIONREG, SCROLL_REG_SHUTDOWN, 0x00);
 	delay(10);
 	write_register8(SCROLL_BANK_FUNCTIONREG, SCROLL_REG_SHUTDOWN, 0x01);
@@ -389,19 +430,17 @@ static void light_led_matrix(){
 	write_register8(SCROLL_BANK_FUNCTIONREG, SCROLL_REG_CONFIG, SCROLL_REG_CONFIG_PICTUREMODE);
 
 	write_register8(SCROLL_BANK_FUNCTIONREG,  SCROLL_REG_PICTURE_FRAME, 0x00);
-
-	for(uint8_t f = 0; f < 8; f++)
+	clear();
+	for(uint8_t frame = 0; frame < 8; frame++)
 	{
+		uint8_t charcount = 0;
+		uint8_t column = 0;
 		for(uint8_t i = 0; i <= 0x11; i++)
 		{
-			write_register8(f, i, 0xff);
+			write_register8(frame, i, buffer[i]); //CHACRACTERS[charcount][column]);
 		}
 	}
-
-
 }
-
-
 /**
   * @brief  Initializes the RCC clock configuration.
   *
@@ -462,16 +501,19 @@ void playTone()
 		delay(1);
 	}	
 }
-
-void show();
-void set_pixel(int row, int col);
-
-void show()
+int main(void)
 {
-}
-int
-main(void)
-{
+#define CHARACTER_ARRAY_WIDTH 	5
+#define CHARACTER_ARRAY_HEIGHT 	7
+
+	uint8_t A[CHARACTER_ARRAY_WIDTH] = {0b00011111, 0b00100100, 0b01000100, 0b00100100, 0b00011111};
+	uint8_t B[CHARACTER_ARRAY_WIDTH] = {0b01111111, 0b00001001, 0b00001001, 0b00001001, 0b00001111};
+	uint8_t C[CHARACTER_ARRAY_WIDTH] = {0b01111111, 0b01000001, 0b01000001, 0b01000001, 0b01000001};
+	uint8_t D[CHARACTER_ARRAY_WIDTH] = {0b00001111, 0b00001001, 0b00001001, 0b00001001, 0b01111111};
+	uint8_t E[CHARACTER_ARRAY_WIDTH] = {0b01111110, 0b01001001, 0b01001001, 0b01001001, 0b01001001};
+	uint8_t F[CHARACTER_ARRAY_WIDTH] = {0b01111111, 0b01001000, 0b01001000, 0b01001000, 0b01001000};
+
+	uint8_t * CHACRACTERS[6] = {A, B, C, D, E, F};
 	/* Enable the FPU before we hit any FP instructions */
 	SCB_CPACR |= ((3UL << 10 * 2) | (3UL << 11 * 2)); /* set CP10 Full Access and set CP11 Full Access */
 
@@ -496,8 +538,12 @@ main(void)
 	int y=0;
 	bool right=true;
 	bool down=true;
-	show();
-	light_led_matrix();
+	//light_led_matrix();
+	uint8_t data[17] = {0};
+	memcpy(data, A, sizeof(uint8_t)*5);
+	memcpy(data+6, B, sizeof(uint8_t)*5);
+	memcpy(data+12, C, sizeof(uint8_t)*5);
+	show(data, 17);
 	while (1) {
 		if (x==0)
 			right=true;
