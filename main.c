@@ -20,7 +20,7 @@
 #include <libopencm3/stm32/usart.h>
 
 #include <libopencmsis/core_cm3.h>
-#define CHARACTER_ARRAY_WIDTH 5
+#define CHARACTER_WIDTH 5
 #define MAX_CHAR_LENGTH 30
 
 const uint8_t I2C_ADDR = 0x74;
@@ -339,7 +339,7 @@ static void initI2C() {
 
 /*
  * Inspiried by the Adafruit lib for the IS31FL3731
- * basically a C port minus a few functions
+ * basically a C port
  */
 #define SCROLL_BANK_FUNCTIONREG 0x0B // page 'nine'
 #define SCROLL_REG_SHUTDOWN 0x0A
@@ -364,6 +364,7 @@ static void write_register8(uint8_t bank, uint8_t reg, uint8_t data) {
   i2c_transfer7(I2C1, I2C_ADDR, buf, 2, NULL, 0);
 }
 
+// Reverses a 8bit number while accounting for endianess
 uint8_t reverse(uint8_t b) {
   b = (b & 0xF0) >> 4 | (b & 0x0F) << 4;
   b = (b & 0xCC) >> 2 | (b & 0x33) << 2;
@@ -371,22 +372,16 @@ uint8_t reverse(uint8_t b) {
   return b;
 }
 
+// Clears out all 8 frame registers
 static void scroll_clear() {
   for (uint8_t frame = 0; frame < 8; frame++) {
-    uint8_t charcount = 0;
-    uint8_t row = 0;
     for (uint8_t i = 0; i <= 0x11; i++) {
-      if (i % 5 == 0 && i != 0)
-        charcount++;
-      if (row % 8 == 0)
-        row = 0;
       write_register8(frame, i, 0x00);
     }
   }
 }
 
 void scroll_init() {
-
   write_register8(SCROLL_BANK_FUNCTIONREG, SCROLL_REG_SHUTDOWN, 0x00);
   delay(10);
   write_register8(SCROLL_BANK_FUNCTIONREG, SCROLL_REG_SHUTDOWN, 0x01);
@@ -399,17 +394,30 @@ void scroll_init() {
 }
 
 void show(uint8_t *buffer, uint8_t length) {
+  /* The matrix is internally divided into two matricies.
+   * Those matricies alternate columnswise. To add to this,
+   * matrix A is mirrored vertically and matrix B horizontally.
+   * This means, that bank 0 starts at column 8.
+   *
+   * bank 1 => col 9
+   * bank 2 => col 7
+   *
+   * etc.
+   */
+
   uint8_t tmp;
   uint8_t result[length];
   result[0] = buffer[0];
+
   for (uint8_t i = 1; i < 9; i++) {
     result[2 * i] = buffer[i];
   }
+
   for (uint8_t i = 9; i < 17; i++) {
     result[((i - 9) * 2) + 1] = buffer[i];
   }
+
   buffer = result;
-  // swap(&buffer);
   for (uint8_t i = 0; i < length; i++) {
     if (i % 2 != 0)
       buffer[i] = reverse(buffer[i]) >> 1;
@@ -421,6 +429,8 @@ void show(uint8_t *buffer, uint8_t length) {
       }
     }
   }
+  
+  // The actual sending data to the LED-Driver
   for (uint8_t frame = 0; frame < 8; frame++) {
     uint8_t charcount = 0;
     uint8_t column = 0;
@@ -432,152 +442,170 @@ void show(uint8_t *buffer, uint8_t length) {
 
 void scroll_text(char *text) {
 
-  uint8_t A[CHARACTER_ARRAY_WIDTH] = {0b00011111, 0b00100100, 0b01000100,
+  // The alphabet encoded columnswise from left to right where the
+  // MSB is ignored. The characters are 5 pixels in width and 7
+  // pixels in height
+  //
+  // Some are uppercase while other are lowercase. This is done for
+  // "asthetics". I did not manage to draw a good looking uppercase W
+
+  uint8_t A[CHARACTER_WIDTH] = {0b00011111, 0b00100100, 0b01000100,
                                       0b00100100, 0b00011111};
-  uint8_t B[CHARACTER_ARRAY_WIDTH] = {0b01111111, 0b00001001, 0b00001001,
+  uint8_t B[CHARACTER_WIDTH] = {0b01111111, 0b00001001, 0b00001001,
                                       0b00001001, 0b00001111};
-  uint8_t C[CHARACTER_ARRAY_WIDTH] = {0b01111111, 0b01000001, 0b01000001,
+  uint8_t C[CHARACTER_WIDTH] = {0b01111111, 0b01000001, 0b01000001,
                                       0b01000001, 0b01000001};
-  uint8_t D[CHARACTER_ARRAY_WIDTH] = {0b00001111, 0b00001001, 0b00001001,
+  uint8_t D[CHARACTER_WIDTH] = {0b00001111, 0b00001001, 0b00001001,
                                       0b00001001, 0b01111111};
-  uint8_t E[CHARACTER_ARRAY_WIDTH] = {0b01111110, 0b01001001, 0b01001001,
+  uint8_t E[CHARACTER_WIDTH] = {0b01111110, 0b01001001, 0b01001001,
                                       0b01001001, 0b01001001};
-  uint8_t F[CHARACTER_ARRAY_WIDTH] = {0b01111111, 0b01001000, 0b01001000,
+  uint8_t F[CHARACTER_WIDTH] = {0b01111111, 0b01001000, 0b01001000,
                                       0b01001000, 0b01001000};
-  uint8_t G[CHARACTER_ARRAY_WIDTH] = {0b01111111, 0b01000001, 0b01000001,
+  uint8_t G[CHARACTER_WIDTH] = {0b01111111, 0b01000001, 0b01000001,
                                       0b01001001, 0b01001111};
-  uint8_t H[CHARACTER_ARRAY_WIDTH] = {0b01111111, 0b00001000, 0b00001000,
+  uint8_t H[CHARACTER_WIDTH] = {0b01111111, 0b00001000, 0b00001000,
                                       0b00001000, 0b01111111};
-  uint8_t I[CHARACTER_ARRAY_WIDTH] = {0b00000000, 0b01000001, 0b01111111,
+  uint8_t I[CHARACTER_WIDTH] = {0b00000000, 0b01000001, 0b01111111,
                                       0b01000001, 0b00000000};
-  uint8_t J[CHARACTER_ARRAY_WIDTH] = {0b00000111, 0b00000001, 0b00000001,
+  uint8_t J[CHARACTER_WIDTH] = {0b00000111, 0b00000001, 0b00000001,
                                       0b00000001, 0b01111111};
-  uint8_t K[CHARACTER_ARRAY_WIDTH] = {0b01111111, 0b00001000, 0b00011000,
+  uint8_t K[CHARACTER_WIDTH] = {0b01111111, 0b00001000, 0b00011000,
                                       0b00100100, 0b01000011};
-  uint8_t L[CHARACTER_ARRAY_WIDTH] = {0b01111111, 0b00000001, 0b00000001,
+  uint8_t L[CHARACTER_WIDTH] = {0b01111111, 0b00000001, 0b00000001,
                                       0b00000001, 0b00000001};
-  uint8_t M[CHARACTER_ARRAY_WIDTH] = {0b00001111, 0b00001000, 0b00001111,
+  uint8_t M[CHARACTER_WIDTH] = {0b00001111, 0b00001000, 0b00001111,
                                       0b00001000, 0b00001111};
-  uint8_t N[CHARACTER_ARRAY_WIDTH] = {0b00011111, 0b00001000, 0b00001000,
+  uint8_t N[CHARACTER_WIDTH] = {0b00011111, 0b00001000, 0b00001000,
                                       0b00001000, 0b00001111};
-  uint8_t O[CHARACTER_ARRAY_WIDTH] = {0b00011111, 0b00010001, 0b00010001,
+  uint8_t O[CHARACTER_WIDTH] = {0b00011111, 0b00010001, 0b00010001,
                                       0b00010001, 0b00011111};
-  uint8_t P[CHARACTER_ARRAY_WIDTH] = {0b01111111, 0b01001000, 0b01001000,
+  uint8_t P[CHARACTER_WIDTH] = {0b01111111, 0b01001000, 0b01001000,
                                       0b01001000, 0b01111000};
-  uint8_t Q[CHARACTER_ARRAY_WIDTH] = {0b01111111, 0b01000001, 0b01000011,
+  uint8_t Q[CHARACTER_WIDTH] = {0b01111111, 0b01000001, 0b01000011,
                                       0b01111111, 0b00000001};
-  uint8_t R[CHARACTER_ARRAY_WIDTH] = {0b01111111, 0b01001100, 0b01001010,
+  uint8_t R[CHARACTER_WIDTH] = {0b01111111, 0b01001100, 0b01001010,
                                       0b01001001, 0b01111000};
-  uint8_t S[CHARACTER_ARRAY_WIDTH] = {0b00000000, 0b00011101, 0b00010101,
+  uint8_t S[CHARACTER_WIDTH] = {0b00000000, 0b00011101, 0b00010101,
                                       0b00010111, 0b00000000};
-  uint8_t T[CHARACTER_ARRAY_WIDTH] = {0b01100000, 0b01000000, 0b01111111,
+  uint8_t T[CHARACTER_WIDTH] = {0b01100000, 0b01000000, 0b01111111,
                                       0b01000000, 0b01100000};
-  uint8_t U[CHARACTER_ARRAY_WIDTH] = {0b01111111, 0b00000001, 0b00000001,
+  uint8_t U[CHARACTER_WIDTH] = {0b01111111, 0b00000001, 0b00000001,
                                       0b00000001, 0b01111111};
-  uint8_t V[CHARACTER_ARRAY_WIDTH] = {0b01111000, 0b00000110, 0b00000001,
+  uint8_t V[CHARACTER_WIDTH] = {0b01111000, 0b00000110, 0b00000001,
                                       0b00000110, 0b01111000};
-  uint8_t W[CHARACTER_ARRAY_WIDTH] = {0b00001111, 0b00000001, 0b00001111,
+  uint8_t W[CHARACTER_WIDTH] = {0b00001111, 0b00000001, 0b00001111,
                                       0b00000001, 0b00001111};
-  uint8_t X[CHARACTER_ARRAY_WIDTH] = {0b01100011, 0b00010100, 0b00001000,
+  uint8_t X[CHARACTER_WIDTH] = {0b01100011, 0b00010100, 0b00001000,
                                       0b00010100, 0b01100011};
-  uint8_t Y[CHARACTER_ARRAY_WIDTH] = {0b01100000, 0b00010000, 0b00001111,
+  uint8_t Y[CHARACTER_WIDTH] = {0b01100000, 0b00010000, 0b00001111,
                                       0b00010000, 0b01100000};
-  uint8_t Z[CHARACTER_ARRAY_WIDTH] = {0b00000000, 0b00011001, 0b00010101,
+  uint8_t Z[CHARACTER_WIDTH] = {0b00000000, 0b00011001, 0b00010101,
                                       0b00010011, 0b00000000};
 
+  // allocating a buffer containing all characters to print in binary
+  // representation, plus 17 more columns for a full screen of blank 
+  // space for more beautiful scrolling
   uint8_t len = (strlen(text) + 17) * 6;
   uint8_t text_buffer[len];
   memset(text_buffer, 0, len);
-  uint8_t *varptr = text_buffer;
 
-  for (uint8_t i = 0; i < strlen(text); i++, varptr += 6) {
+  // The pointer that gets passed around and increased
+  uint8_t *offsetptr = text_buffer;
+
+  // Convert a string into the matching binary representation
+  for (uint8_t i = 0; i < strlen(text); i++, offsetptr += 6) {
     switch (text[i]) {
     case 'a':
-      memcpy(varptr, A, sizeof(uint8_t) * 5);
+      memcpy(offsetptr, A, sizeof(uint8_t) * 5);
       break;
     case 'b':
-      memcpy(varptr, B, sizeof(uint8_t) * 5);
+      memcpy(offsetptr, B, sizeof(uint8_t) * 5);
       break;
     case 'c':
-      memcpy(varptr, C, sizeof(uint8_t) * 5);
+      memcpy(offsetptr, C, sizeof(uint8_t) * 5);
       break;
     case 'd':
-      memcpy(varptr, D, sizeof(uint8_t) * 5);
+      memcpy(offsetptr, D, sizeof(uint8_t) * 5);
       break;
     case 'e':
-      memcpy(varptr, E, sizeof(uint8_t) * 5);
+      memcpy(offsetptr, E, sizeof(uint8_t) * 5);
       break;
     case 'f':
-      memcpy(varptr, F, sizeof(uint8_t) * 5);
+      memcpy(offsetptr, F, sizeof(uint8_t) * 5);
       break;
     case 'g':
-      memcpy(varptr, G, sizeof(uint8_t) * 5);
+      memcpy(offsetptr, G, sizeof(uint8_t) * 5);
       break;
     case 'h':
-      memcpy(varptr, H, sizeof(uint8_t) * 5);
+      memcpy(offsetptr, H, sizeof(uint8_t) * 5);
       break;
     case 'i':
-      memcpy(varptr, I, sizeof(uint8_t) * 5);
+      memcpy(offsetptr, I, sizeof(uint8_t) * 5);
       break;
     case 'j':
-      memcpy(varptr, J, sizeof(uint8_t) * 5);
+      memcpy(offsetptr, J, sizeof(uint8_t) * 5);
       break;
     case 'k':
-      memcpy(varptr, K, sizeof(uint8_t) * 5);
+      memcpy(offsetptr, K, sizeof(uint8_t) * 5);
       break;
     case 'l':
-      memcpy(varptr, L, sizeof(uint8_t) * 5);
+      memcpy(offsetptr, L, sizeof(uint8_t) * 5);
       break;
     case 'm':
-      memcpy(varptr, M, sizeof(uint8_t) * 5);
+      memcpy(offsetptr, M, sizeof(uint8_t) * 5);
       break;
     case 'n':
-      memcpy(varptr, N, sizeof(uint8_t) * 5);
+      memcpy(offsetptr, N, sizeof(uint8_t) * 5);
       break;
     case 'o':
-      memcpy(varptr, O, sizeof(uint8_t) * 5);
+      memcpy(offsetptr, O, sizeof(uint8_t) * 5);
       break;
     case 'p':
-      memcpy(varptr, P, sizeof(uint8_t) * 5);
+      memcpy(offsetptr, P, sizeof(uint8_t) * 5);
       break;
     case 'q':
-      memcpy(varptr, Q, sizeof(uint8_t) * 5);
+      memcpy(offsetptr, Q, sizeof(uint8_t) * 5);
       break;
     case 'r':
-      memcpy(varptr, R, sizeof(uint8_t) * 5);
+      memcpy(offsetptr, R, sizeof(uint8_t) * 5);
       break;
     case 's':
-      memcpy(varptr, S, sizeof(uint8_t) * 5);
+      memcpy(offsetptr, S, sizeof(uint8_t) * 5);
       break;
     case 't':
-      memcpy(varptr, T, sizeof(uint8_t) * 5);
+      memcpy(offsetptr, T, sizeof(uint8_t) * 5);
       break;
     case 'u':
-      memcpy(varptr, U, sizeof(uint8_t) * 5);
+      memcpy(offsetptr, U, sizeof(uint8_t) * 5);
       break;
     case 'v':
-      memcpy(varptr, V, sizeof(uint8_t) * 5);
+      memcpy(offsetptr, V, sizeof(uint8_t) * 5);
       break;
     case 'w':
-      memcpy(varptr, W, sizeof(uint8_t) * 5);
+      memcpy(offsetptr, W, sizeof(uint8_t) * 5);
       break;
     case 'x':
-      memcpy(varptr, X, sizeof(uint8_t) * 5);
+      memcpy(offsetptr, X, sizeof(uint8_t) * 5);
       break;
     case 'y':
-      memcpy(varptr, Y, sizeof(uint8_t) * 5);
+      memcpy(offsetptr, Y, sizeof(uint8_t) * 5);
       break;
     case 'z':
-      memcpy(varptr, Z, sizeof(uint8_t) * 5);
+      memcpy(offsetptr, Z, sizeof(uint8_t) * 5);
       break;
     default:
-      memset(varptr, 0, sizeof(uint8_t) * 5);
+      memset(offsetptr, 0, sizeof(uint8_t) * 5);
     }
   }
-  varptr = text_buffer;
+  offsetptr = text_buffer;
 
-  for (uint8_t i = 0; i < len - 17 * 6; i++, varptr++) {
-    show(varptr, 17);
+  // Send the data to the screen and increment the row each pass
+  for (uint8_t i = 0; i < len - 17 * 6; i++, offsetptr++) {
+ 
+    show(offsetptr, 17);
+    // Wait a bit before moving the screen the first time
+    if(i == 0)
+	delay(1700);
     delay(300);
   }
 }
@@ -656,7 +684,7 @@ int main(void) {
 
   scroll_init();
   scroll_clear();
-  scroll_text("this is a test");
+  scroll_text("code was refactored");
 
   // if they hit reset the second time, go to app
   board_set_rtc_signature(APP_RTC_SIGNATURE, 0);
@@ -665,7 +693,6 @@ int main(void) {
   int y = 0;
   bool right = true;
   bool down = true;
-  // light_led_matrix();
   while (1) {
     if (x == 0)
       right = true;
