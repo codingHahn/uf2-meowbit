@@ -21,6 +21,8 @@
 #include <libopencm3/cm3/scb.h>
 
 #include <libopencmsis/core_cm3.h>
+#define CHARACTER_ARRAY_WIDTH 	5
+#define MAX_CHAR_LENGTH 30
 
 const uint8_t I2C_ADDR = 0x74;
 
@@ -380,7 +382,7 @@ uint8_t reverse(uint8_t b) {
    return b;
 }
 
-static void clear(){
+static void scroll_clear(){
 	for(uint8_t frame = 0; frame < 8; frame++)
 	{
 		uint8_t charcount = 0;
@@ -394,6 +396,19 @@ static void clear(){
 			write_register8(frame, i, 0x00);
 		}
 	}
+}
+
+void scroll_init()
+{
+
+	write_register8(SCROLL_BANK_FUNCTIONREG, SCROLL_REG_SHUTDOWN, 0x00);
+	delay(10);
+	write_register8(SCROLL_BANK_FUNCTIONREG, SCROLL_REG_SHUTDOWN, 0x01);
+	delay(10);
+
+	write_register8(SCROLL_BANK_FUNCTIONREG, SCROLL_REG_CONFIG, SCROLL_REG_CONFIG_PICTUREMODE);
+
+	write_register8(SCROLL_BANK_FUNCTIONREG,  SCROLL_REG_PICTURE_FRAME, 0x00);
 }
 
 void show(uint8_t* buffer, uint8_t length){
@@ -422,90 +437,19 @@ void show(uint8_t* buffer, uint8_t length){
 			}
 		}
 	}
-	write_register8(SCROLL_BANK_FUNCTIONREG, SCROLL_REG_SHUTDOWN, 0x00);
-	delay(10);
-	write_register8(SCROLL_BANK_FUNCTIONREG, SCROLL_REG_SHUTDOWN, 0x01);
-	delay(10);
-
-	write_register8(SCROLL_BANK_FUNCTIONREG, SCROLL_REG_CONFIG, SCROLL_REG_CONFIG_PICTUREMODE);
-
-	write_register8(SCROLL_BANK_FUNCTIONREG,  SCROLL_REG_PICTURE_FRAME, 0x00);
-	clear();
 	for(uint8_t frame = 0; frame < 8; frame++)
 	{
 		uint8_t charcount = 0;
 		uint8_t column = 0;
 		for(uint8_t i = 0; i <= 0x11; i++)
 		{
-			write_register8(frame, i, buffer[i]); //CHACRACTERS[charcount][column]);
+			write_register8(frame, i, buffer[i]);
 		}
 	}
 }
-/**
-  * @brief  Initializes the RCC clock configuration.
-  *
-  * @param  clock_setup : The clock configuration to set
-  */
-static inline void
-clock_init(void)
+
+void scroll_text(char* text)
 {
-	uint32_t pllm = BOOT_SETTINGS->hseValue / 1000000;
-	if (pllm < 4 || pllm > 60 || pllm * 1000000 != BOOT_SETTINGS->hseValue)
-		pllm = OSC_FREQ;
-	clock_setup.pllm = pllm;
-	rcc_clock_setup_pll(&clock_setup);
-}
-
-void
-led_on(unsigned led)
-{
-	switch (led) {
-	case LED_ACTIVITY:
-		pin_set(CFG_PIN_LED, 1);
-		break;
-
-	case LED_BOOTLOADER:
-		pin_set(CFG_PIN_LED1, 1);
-		break;
-	}
-}
-
-void
-led_off(unsigned led)
-{
-	switch (led) {
-	case LED_ACTIVITY:
-		pin_set(CFG_PIN_LED, 0);
-		break;
-
-	case LED_BOOTLOADER:
-		pin_set(CFG_PIN_LED1, 0);
-		break;
-	}
-}
-
-/* we should know this, but we don't */
-#ifndef SCB_CPACR
-# define SCB_CPACR (*((volatile uint32_t *) (((0xE000E000UL) + 0x0D00UL) + 0x088)))
-#endif
-
-#define PWR_CR_LPLVDS (1 << 10)
-
-void playTone()
-{
-	for (int i=0;i<100;i++)
-	{
-		pin_set(CFG_PIN_JACK_SND, 1);
-		delay(1);
-		pin_set(CFG_PIN_JACK_SND, 0);
-		delay(1);
-	}	
-}
-int main(void)
-{
-#define CHARACTER_ARRAY_WIDTH 	5
-#define CHARACTER_ARRAY_HEIGHT 	7
-#define MAX_CHAR_LENGTH 30
 
 	uint8_t A[CHARACTER_ARRAY_WIDTH] = {0b00011111, 0b00100100, 0b01000100, 0b00100100, 0b00011111};
 	uint8_t B[CHARACTER_ARRAY_WIDTH] = {0b01111111, 0b00001001, 0b00001001, 0b00001001, 0b00001111};
@@ -534,14 +478,13 @@ int main(void)
 	uint8_t Y[CHARACTER_ARRAY_WIDTH] = {0b01100000, 0b00010000, 0b00001111, 0b00010000, 0b01100000};
 	uint8_t Z[CHARACTER_ARRAY_WIDTH] = {0b00000000, 0b00011001, 0b00010101, 0b00010011, 0b00000000};
 
-	char* input_string = "abcdefghijklmopqrstuvwxyz";
-	uint8_t len = (strlen(input_string) + 17) *6;
+	uint8_t len = (strlen(text) + 17) *6;
 	uint8_t text_buffer[len];
 	memset(text_buffer, 0, len);
 	uint8_t *varptr = text_buffer;
 
-	for(uint8_t i = 0; i < strlen(input_string); i++, varptr+=6){
-		switch(input_string[i]){
+	for(uint8_t i = 0; i < strlen(text); i++, varptr+=6){
+		switch(text[i]){
 		case 'a':
 			memcpy(varptr, A, sizeof(uint8_t) * 5);
 			break;
@@ -626,7 +569,74 @@ int main(void)
 	}
 	varptr = text_buffer;
 
+	for(uint8_t i = 0; i < len-17*6; i++, varptr++){
+		show(varptr, 17);
+		delay(300);
 
+	}
+}
+/**
+  * @brief  Initializes the RCC clock configuration.
+  *
+  * @param  clock_setup : The clock configuration to set
+  */
+static inline void
+clock_init(void)
+{
+	uint32_t pllm = BOOT_SETTINGS->hseValue / 1000000;
+	if (pllm < 4 || pllm > 60 || pllm * 1000000 != BOOT_SETTINGS->hseValue)
+		pllm = OSC_FREQ;
+	clock_setup.pllm = pllm;
+	rcc_clock_setup_pll(&clock_setup);
+}
+
+void
+led_on(unsigned led)
+{
+	switch (led) {
+	case LED_ACTIVITY:
+		pin_set(CFG_PIN_LED, 1);
+		break;
+
+	case LED_BOOTLOADER:
+		pin_set(CFG_PIN_LED1, 1);
+		break;
+	}
+}
+
+void
+led_off(unsigned led)
+{
+	switch (led) {
+	case LED_ACTIVITY:
+		pin_set(CFG_PIN_LED, 0);
+		break;
+
+	case LED_BOOTLOADER:
+		pin_set(CFG_PIN_LED1, 0);
+		break;
+	}
+}
+
+/* we should know this, but we don't */
+#ifndef SCB_CPACR
+# define SCB_CPACR (*((volatile uint32_t *) (((0xE000E000UL) + 0x0D00UL) + 0x088)))
+#endif
+
+#define PWR_CR_LPLVDS (1 << 10)
+
+void playTone()
+{
+	for (int i=0;i<100;i++)
+	{
+		pin_set(CFG_PIN_JACK_SND, 1);
+		delay(1);
+		pin_set(CFG_PIN_JACK_SND, 0);
+		delay(1);
+	}	
+}
+int main(void)
+{
 	/* Enable the FPU before we hit any FP instructions */
 	SCB_CPACR |= ((3UL << 10 * 2) | (3UL << 11 * 2)); /* set CP10 Full Access and set CP11 Full Access */
 
@@ -641,13 +651,12 @@ int main(void)
 
 	screen_init();
 	//draw_drag();
-	for(uint8_t i = 0; i < len-17*6; i++, varptr++){
-		show(varptr, 17);
-		delay(300);
-
-	}
 
 	//playTone();
+	
+	scroll_init();
+	scroll_clear();
+	scroll_text("this is a test");
 
 	// if they hit reset the second time, go to app
 	board_set_rtc_signature(APP_RTC_SIGNATURE, 0);
@@ -657,11 +666,6 @@ int main(void)
 	bool right=true;
 	bool down=true;
 	//light_led_matrix();
-	uint8_t data[17] = {0};
-	memcpy(data, A, sizeof(uint8_t)*5);
-	memcpy(data+6, B, sizeof(uint8_t)*5);
-	memcpy(data+12, C, sizeof(uint8_t)*5);
-	show(data, 17);
 	while (1) {
 		if (x==0)
 			right=true;
