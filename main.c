@@ -505,6 +505,7 @@ int main(void)
 {
 #define CHARACTER_ARRAY_WIDTH 	5
 #define CHARACTER_ARRAY_HEIGHT 	7
+#define MAX_CHAR_LENGTH 30
 
 	uint8_t A[CHARACTER_ARRAY_WIDTH] = {0b00011111, 0b00100100, 0b01000100, 0b00100100, 0b00011111};
 	uint8_t B[CHARACTER_ARRAY_WIDTH] = {0b01111111, 0b00001001, 0b00001001, 0b00001001, 0b00001111};
@@ -512,8 +513,120 @@ int main(void)
 	uint8_t D[CHARACTER_ARRAY_WIDTH] = {0b00001111, 0b00001001, 0b00001001, 0b00001001, 0b01111111};
 	uint8_t E[CHARACTER_ARRAY_WIDTH] = {0b01111110, 0b01001001, 0b01001001, 0b01001001, 0b01001001};
 	uint8_t F[CHARACTER_ARRAY_WIDTH] = {0b01111111, 0b01001000, 0b01001000, 0b01001000, 0b01001000};
+	uint8_t G[CHARACTER_ARRAY_WIDTH] = {0b01111111, 0b01000001, 0b01000001, 0b01001001, 0b01001111};
+	uint8_t H[CHARACTER_ARRAY_WIDTH] = {0b01111111, 0b00001000, 0b00001000, 0b00001000, 0b01111111};
+	uint8_t I[CHARACTER_ARRAY_WIDTH] = {0b00000000, 0b01000001, 0b01111111, 0b01000001, 0b00000000};
+	uint8_t J[CHARACTER_ARRAY_WIDTH] = {0b00000111, 0b00000001, 0b00000001, 0b00000001, 0b01111111};
+	uint8_t K[CHARACTER_ARRAY_WIDTH] = {0b01111111, 0b00001000, 0b00011000, 0b00100100, 0b01000011};
+	uint8_t L[CHARACTER_ARRAY_WIDTH] = {0b01111111, 0b00000001, 0b00000001, 0b00000001, 0b00000001};
+	uint8_t M[CHARACTER_ARRAY_WIDTH] = {0b00001111, 0b00001000, 0b00001111, 0b00001000, 0b00001111};
+	uint8_t N[CHARACTER_ARRAY_WIDTH] = {0b00011111, 0b00001000, 0b00001000, 0b00001000, 0b00001111};
+	uint8_t O[CHARACTER_ARRAY_WIDTH] = {0b00011111, 0b00010001, 0b00010001, 0b00010001, 0b00011111};
+	uint8_t P[CHARACTER_ARRAY_WIDTH] = {0b01111111, 0b01001000, 0b01001000, 0b01001000, 0b01111000};
+	uint8_t Q[CHARACTER_ARRAY_WIDTH] = {0b01111111, 0b01000001, 0b01000011, 0b01111111, 0b00000001};
+	uint8_t R[CHARACTER_ARRAY_WIDTH] = {0b01111111, 0b01001100, 0b01001010, 0b01001001, 0b01111000};
+	uint8_t S[CHARACTER_ARRAY_WIDTH] = {0b00000000, 0b00011101, 0b00010101, 0b00010111, 0b00000000};
+	uint8_t T[CHARACTER_ARRAY_WIDTH] = {0b01100000, 0b01000000, 0b01111111, 0b01000000, 0b01100000};
+	uint8_t U[CHARACTER_ARRAY_WIDTH] = {0b01111111, 0b00000001, 0b00000001, 0b00000001, 0b01111111};
+	uint8_t V[CHARACTER_ARRAY_WIDTH] = {0b01111000, 0b00000110, 0b00000001, 0b00000110, 0b01111000};
+	uint8_t W[CHARACTER_ARRAY_WIDTH] = {0b00001111, 0b00000001, 0b00001111, 0b00000001, 0b00001111};
+	uint8_t X[CHARACTER_ARRAY_WIDTH] = {0b01100011, 0b00010100, 0b00001000, 0b00010100, 0b01100011};
+	uint8_t Y[CHARACTER_ARRAY_WIDTH] = {0b01100000, 0b00010000, 0b00001111, 0b00010000, 0b01100000};
+	uint8_t Z[CHARACTER_ARRAY_WIDTH] = {0b00000000, 0b00011001, 0b00010101, 0b00010011, 0b00000000};
 
-	uint8_t * CHACRACTERS[6] = {A, B, C, D, E, F};
+	char* input_string = "abcdefghijklmopqrstuvwxyz";
+	uint8_t len = (strlen(input_string) + 17) *6;
+	uint8_t text_buffer[len];
+	memset(text_buffer, 0, len);
+	uint8_t *varptr = text_buffer;
+
+	for(uint8_t i = 0; i < strlen(input_string); i++, varptr+=6){
+		switch(input_string[i]){
+		case 'a':
+			memcpy(varptr, A, sizeof(uint8_t) * 5);
+			break;
+		case 'b':
+			memcpy(varptr, B, sizeof(uint8_t) * 5);
+			break;
+		case 'c':
+			memcpy(varptr, C, sizeof(uint8_t) * 5);
+			break;
+		case 'd':
+			memcpy(varptr, D, sizeof(uint8_t) * 5);
+			break;
+		case 'e':
+			memcpy(varptr, E, sizeof(uint8_t) * 5);
+			break;
+		case 'f':
+			memcpy(varptr, F, sizeof(uint8_t) * 5);
+			break;
+		case 'g':
+			memcpy(varptr, G, sizeof(uint8_t) * 5);
+			break;
+		case 'h':
+			memcpy(varptr, H, sizeof(uint8_t) * 5);
+			break;
+		case 'i':
+			memcpy(varptr, I, sizeof(uint8_t) * 5);
+			break;
+		case 'j':
+			memcpy(varptr, J, sizeof(uint8_t) * 5);
+			break;
+		case 'k':
+			memcpy(varptr, K, sizeof(uint8_t) * 5);
+			break;
+		case 'l':
+			memcpy(varptr, L, sizeof(uint8_t) * 5);
+			break;
+		case 'm':
+			memcpy(varptr, M, sizeof(uint8_t) * 5);
+			break;
+		case 'n':
+			memcpy(varptr, N, sizeof(uint8_t) * 5);
+			break;
+		case 'o':
+			memcpy(varptr, O, sizeof(uint8_t) * 5);
+			break;
+		case 'p':
+			memcpy(varptr, P, sizeof(uint8_t) * 5);
+			break;
+		case 'q':
+			memcpy(varptr, Q, sizeof(uint8_t) * 5);
+			break;
+		case 'r':
+			memcpy(varptr, R, sizeof(uint8_t) * 5);
+			break;
+		case 's':
+			memcpy(varptr, S, sizeof(uint8_t) * 5);
+			break;
+		case 't':
+			memcpy(varptr, T, sizeof(uint8_t) * 5);
+			break;
+		case 'u':
+			memcpy(varptr, U, sizeof(uint8_t) * 5);
+			break;
+		case 'v':
+			memcpy(varptr, V, sizeof(uint8_t) * 5);
+			break;
+		case 'w':
+			memcpy(varptr, W, sizeof(uint8_t) * 5);
+			break;
+		case 'x':
+			memcpy(varptr, X, sizeof(uint8_t) * 5);
+			break;
+		case 'y':
+			memcpy(varptr, Y, sizeof(uint8_t) * 5);
+			break;
+		case 'z':
+			memcpy(varptr, Z, sizeof(uint8_t) * 5);
+			break;
+		default:
+			memset(varptr, 0, sizeof(uint8_t) * 5);
+		}
+	}
+	varptr = text_buffer;
+
+
 	/* Enable the FPU before we hit any FP instructions */
 	SCB_CPACR |= ((3UL << 10 * 2) | (3UL << 11 * 2)); /* set CP10 Full Access and set CP11 Full Access */
 
@@ -528,6 +641,11 @@ int main(void)
 
 	screen_init();
 	//draw_drag();
+	for(uint8_t i = 0; i < len-17*6; i++, varptr++){
+		show(varptr, 17);
+		delay(300);
+
+	}
 
 	//playTone();
 
