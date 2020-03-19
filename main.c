@@ -399,8 +399,11 @@ void show(uint8_t *buffer, uint8_t length) {
    * matrix A is mirrored vertically and matrix B horizontally.
    * This means, that bank 0 starts at column 8.
    *
-   * bank 1 => col 9
-   * bank 2 => col 7
+   * bank 0 => col 8	(8+0)
+   * bank 1 => col 9	(8+1)
+   * bank 2 => col 7	(8-1)
+   * bank 3 => col 10	(8+2)
+   * bank 4 => col 6	(8-2)
    *
    * etc.
    */
@@ -599,6 +602,7 @@ void scroll_text(char *text) {
   }
   offsetptr = text_buffer;
 
+  if(strlen(text) > 3){
   // Send the data to the screen and increment the row each pass
   for (uint8_t i = 0; i < len - 17 * 6; i++, offsetptr++) {
  
@@ -608,6 +612,9 @@ void scroll_text(char *text) {
 	delay(1700);
     delay(300);
   }
+  }else 
+    show(offsetptr, 17);
+  
 }
 /**
  * @brief  Initializes the RCC clock configuration.
@@ -662,6 +669,7 @@ void playTone() {
     delay(1);
   }
 }
+
 int main(void) {
   /* Enable the FPU before we hit any FP instructions */
   SCB_CPACR |=
