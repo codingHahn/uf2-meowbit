@@ -6,6 +6,8 @@
 #include "bl.h"
 #include "hw_config.h"
 #include "img.h"
+#include "scrollbit.h"
+#include "is31fl3731.h"
 #include <string.h>
 
 #include <libopencm3/cm3/scb.h>
@@ -20,10 +22,8 @@
 #include <libopencm3/stm32/usart.h>
 
 #include <libopencmsis/core_cm3.h>
-#define CHARACTER_WIDTH 5
-#define MAX_CHAR_LENGTH 30
 
-const uint8_t I2C_ADDR = 0x74;
+const uint8_t SCROLLBIT_ADDR = 0x74;
 
 /* flash parameters that we should not really know */
 static struct {
@@ -324,7 +324,7 @@ static void initSpi() {
   DMESG("SPI2 init");
 }
 
-static void initI2C() {
+static unsigned int initI2C() {
   rcc_periph_clock_enable(RCC_I2C1);
   rcc_periph_clock_enable(RCC_GPIOB);
 
@@ -335,287 +335,11 @@ static void initI2C() {
   i2c_set_speed(I2C1, i2c_speed_sm_100k, 16);
   /* HSI is at 8Mhz */
   i2c_peripheral_enable(I2C1);
+  return I2C1;
 }
 
-/*
- * Inspiried by the Adafruit lib for the IS31FL3731
- * basically a C port
- */
-#define SCROLL_BANK_FUNCTIONREG 0x0B // page 'nine'
-#define SCROLL_REG_SHUTDOWN 0x0A
-#define SCROLL_REG_CONFIG 0x00
-#define SCROLL_REG_CONFIG_PICTUREMODE 0x00
-#define SCROLL_REG_PICTURE_FRAME 0x01
-#define SCROLL_CMD_REG 0xFD
 
-static void select_bank(uint8_t bank) {
-  uint8_t data[2];
-  data[0] = SCROLL_CMD_REG;
-  data[1] = bank;
-  i2c_transfer7(I2C1, I2C_ADDR, data, 2, NULL, 0);
-}
 
-static void write_register8(uint8_t bank, uint8_t reg, uint8_t data) {
-  select_bank(bank);
-  uint8_t buf[2];
-  buf[0] = reg;
-  buf[1] = data;
-
-  i2c_transfer7(I2C1, I2C_ADDR, buf, 2, NULL, 0);
-}
-
-// Reverses a 8bit number while accounting for endianess
-uint8_t reverse(uint8_t b) {
-  b = (b & 0xF0) >> 4 | (b & 0x0F) << 4;
-  b = (b & 0xCC) >> 2 | (b & 0x33) << 2;
-  b = (b & 0xAA) >> 1 | (b & 0x55) << 1;
-  return b;
-}
-
-// Clears out all 8 frame registers
-static void scroll_clear() {
-  for (uint8_t frame = 0; frame < 8; frame++) {
-    for (uint8_t i = 0; i <= 0x11; i++) {
-      write_register8(frame, i, 0x00);
-    }
-  }
-}
-
-void scroll_init() {
-  write_register8(SCROLL_BANK_FUNCTIONREG, SCROLL_REG_SHUTDOWN, 0x00);
-  delay(10);
-  write_register8(SCROLL_BANK_FUNCTIONREG, SCROLL_REG_SHUTDOWN, 0x01);
-  delay(10);
-
-  write_register8(SCROLL_BANK_FUNCTIONREG, SCROLL_REG_CONFIG,
-                  SCROLL_REG_CONFIG_PICTUREMODE);
-
-  write_register8(SCROLL_BANK_FUNCTIONREG, SCROLL_REG_PICTURE_FRAME, 0x00);
-}
-
-void show(uint8_t *buffer, uint8_t length) {
-  /* The matrix is internally divided into two matricies.
-   * Those matricies alternate columnswise. To add to this,
-   * matrix A is mirrored vertically and matrix B horizontally.
-   * This means, that bank 0 starts at column 8.
-   *
-   * bank 0 => col 8	(8+0)
-   * bank 1 => col 9	(8+1)
-   * bank 2 => col 7	(8-1)
-   * bank 3 => col 10	(8+2)
-   * bank 4 => col 6	(8-2)
-   *
-   * etc.
-   */
-
-  uint8_t tmp;
-  uint8_t result[length];
-  result[0] = buffer[0];
-
-  for (uint8_t i = 1; i < 9; i++) {
-    result[2 * i] = buffer[i];
-  }
-
-  for (uint8_t i = 9; i < 17; i++) {
-    result[((i - 9) * 2) + 1] = buffer[i];
-  }
-
-  buffer = result;
-  for (uint8_t i = 0; i < length; i++) {
-    if (i % 2 != 0)
-      buffer[i] = reverse(buffer[i]) >> 1;
-    else {
-      if (i < 7) {
-        tmp = buffer[i];
-        buffer[i] = buffer[16 - i];
-        buffer[16 - i] = tmp;
-      }
-    }
-  }
-  
-  // The actual sending data to the LED-Driver
-  for (uint8_t frame = 0; frame < 8; frame++) {
-    uint8_t charcount = 0;
-    uint8_t column = 0;
-    for (uint8_t i = 0; i <= 0x11; i++) {
-      write_register8(frame, i, buffer[i]);
-    }
-  }
-}
-
-void scroll_text(char *text) {
-
-  // The alphabet encoded columnswise from left to right where the
-  // MSB is ignored. The characters are 5 pixels in width and 7
-  // pixels in height
-  //
-  // Some are uppercase while other are lowercase. This is done for
-  // "asthetics". I did not manage to draw a good looking uppercase W
-
-  uint8_t A[CHARACTER_WIDTH] = {0b00011111, 0b00100100, 0b01000100,
-                                      0b00100100, 0b00011111};
-  uint8_t B[CHARACTER_WIDTH] = {0b01111111, 0b00001001, 0b00001001,
-                                      0b00001001, 0b00001111};
-  uint8_t C[CHARACTER_WIDTH] = {0b01111111, 0b01000001, 0b01000001,
-                                      0b01000001, 0b01000001};
-  uint8_t D[CHARACTER_WIDTH] = {0b00001111, 0b00001001, 0b00001001,
-                                      0b00001001, 0b01111111};
-  uint8_t E[CHARACTER_WIDTH] = {0b01111110, 0b01001001, 0b01001001,
-                                      0b01001001, 0b01001001};
-  uint8_t F[CHARACTER_WIDTH] = {0b01111111, 0b01001000, 0b01001000,
-                                      0b01001000, 0b01001000};
-  uint8_t G[CHARACTER_WIDTH] = {0b01111111, 0b01000001, 0b01000001,
-                                      0b01001001, 0b01001111};
-  uint8_t H[CHARACTER_WIDTH] = {0b01111111, 0b00001000, 0b00001000,
-                                      0b00001000, 0b01111111};
-  uint8_t I[CHARACTER_WIDTH] = {0b00000000, 0b01000001, 0b01111111,
-                                      0b01000001, 0b00000000};
-  uint8_t J[CHARACTER_WIDTH] = {0b00000111, 0b00000001, 0b00000001,
-                                      0b00000001, 0b01111111};
-  uint8_t K[CHARACTER_WIDTH] = {0b01111111, 0b00001000, 0b00011000,
-                                      0b00100100, 0b01000011};
-  uint8_t L[CHARACTER_WIDTH] = {0b01111111, 0b00000001, 0b00000001,
-                                      0b00000001, 0b00000001};
-  uint8_t M[CHARACTER_WIDTH] = {0b00001111, 0b00001000, 0b00001111,
-                                      0b00001000, 0b00001111};
-  uint8_t N[CHARACTER_WIDTH] = {0b00011111, 0b00001000, 0b00001000,
-                                      0b00001000, 0b00001111};
-  uint8_t O[CHARACTER_WIDTH] = {0b00011111, 0b00010001, 0b00010001,
-                                      0b00010001, 0b00011111};
-  uint8_t P[CHARACTER_WIDTH] = {0b01111111, 0b01001000, 0b01001000,
-                                      0b01001000, 0b01111000};
-  uint8_t Q[CHARACTER_WIDTH] = {0b01111111, 0b01000001, 0b01000011,
-                                      0b01111111, 0b00000001};
-  uint8_t R[CHARACTER_WIDTH] = {0b01111111, 0b01001100, 0b01001010,
-                                      0b01001001, 0b01111000};
-  uint8_t S[CHARACTER_WIDTH] = {0b00000000, 0b00011101, 0b00010101,
-                                      0b00010111, 0b00000000};
-  uint8_t T[CHARACTER_WIDTH] = {0b01100000, 0b01000000, 0b01111111,
-                                      0b01000000, 0b01100000};
-  uint8_t U[CHARACTER_WIDTH] = {0b01111111, 0b00000001, 0b00000001,
-                                      0b00000001, 0b01111111};
-  uint8_t V[CHARACTER_WIDTH] = {0b01111000, 0b00000110, 0b00000001,
-                                      0b00000110, 0b01111000};
-  uint8_t W[CHARACTER_WIDTH] = {0b00001111, 0b00000001, 0b00001111,
-                                      0b00000001, 0b00001111};
-  uint8_t X[CHARACTER_WIDTH] = {0b01100011, 0b00010100, 0b00001000,
-                                      0b00010100, 0b01100011};
-  uint8_t Y[CHARACTER_WIDTH] = {0b01100000, 0b00010000, 0b00001111,
-                                      0b00010000, 0b01100000};
-  uint8_t Z[CHARACTER_WIDTH] = {0b00000000, 0b00011001, 0b00010101,
-                                      0b00010011, 0b00000000};
-
-  // allocating a buffer containing all characters to print in binary
-  // representation, plus 17 more columns for a full screen of blank 
-  // space for more beautiful scrolling
-  uint8_t len = (strlen(text) + 17) * 6;
-  uint8_t text_buffer[len];
-  memset(text_buffer, 0, len);
-
-  // The pointer that gets passed around and increased
-  uint8_t *offsetptr = text_buffer;
-
-  // Convert a string into the matching binary representation
-  for (uint8_t i = 0; i < strlen(text); i++, offsetptr += 6) {
-    switch (text[i]) {
-    case 'a':
-      memcpy(offsetptr, A, sizeof(uint8_t) * 5);
-      break;
-    case 'b':
-      memcpy(offsetptr, B, sizeof(uint8_t) * 5);
-      break;
-    case 'c':
-      memcpy(offsetptr, C, sizeof(uint8_t) * 5);
-      break;
-    case 'd':
-      memcpy(offsetptr, D, sizeof(uint8_t) * 5);
-      break;
-    case 'e':
-      memcpy(offsetptr, E, sizeof(uint8_t) * 5);
-      break;
-    case 'f':
-      memcpy(offsetptr, F, sizeof(uint8_t) * 5);
-      break;
-    case 'g':
-      memcpy(offsetptr, G, sizeof(uint8_t) * 5);
-      break;
-    case 'h':
-      memcpy(offsetptr, H, sizeof(uint8_t) * 5);
-      break;
-    case 'i':
-      memcpy(offsetptr, I, sizeof(uint8_t) * 5);
-      break;
-    case 'j':
-      memcpy(offsetptr, J, sizeof(uint8_t) * 5);
-      break;
-    case 'k':
-      memcpy(offsetptr, K, sizeof(uint8_t) * 5);
-      break;
-    case 'l':
-      memcpy(offsetptr, L, sizeof(uint8_t) * 5);
-      break;
-    case 'm':
-      memcpy(offsetptr, M, sizeof(uint8_t) * 5);
-      break;
-    case 'n':
-      memcpy(offsetptr, N, sizeof(uint8_t) * 5);
-      break;
-    case 'o':
-      memcpy(offsetptr, O, sizeof(uint8_t) * 5);
-      break;
-    case 'p':
-      memcpy(offsetptr, P, sizeof(uint8_t) * 5);
-      break;
-    case 'q':
-      memcpy(offsetptr, Q, sizeof(uint8_t) * 5);
-      break;
-    case 'r':
-      memcpy(offsetptr, R, sizeof(uint8_t) * 5);
-      break;
-    case 's':
-      memcpy(offsetptr, S, sizeof(uint8_t) * 5);
-      break;
-    case 't':
-      memcpy(offsetptr, T, sizeof(uint8_t) * 5);
-      break;
-    case 'u':
-      memcpy(offsetptr, U, sizeof(uint8_t) * 5);
-      break;
-    case 'v':
-      memcpy(offsetptr, V, sizeof(uint8_t) * 5);
-      break;
-    case 'w':
-      memcpy(offsetptr, W, sizeof(uint8_t) * 5);
-      break;
-    case 'x':
-      memcpy(offsetptr, X, sizeof(uint8_t) * 5);
-      break;
-    case 'y':
-      memcpy(offsetptr, Y, sizeof(uint8_t) * 5);
-      break;
-    case 'z':
-      memcpy(offsetptr, Z, sizeof(uint8_t) * 5);
-      break;
-    default:
-      memset(offsetptr, 0, sizeof(uint8_t) * 5);
-    }
-  }
-  offsetptr = text_buffer;
-
-  if(strlen(text) > 3){
-  // Send the data to the screen and increment the row each pass
-  for (uint8_t i = 0; i < len - 17 * 6; i++, offsetptr++) {
- 
-    show(offsetptr, 17);
-    // Wait a bit before moving the screen the first time
-    if(i == 0)
-	delay(1700);
-    delay(300);
-  }
-  }else 
-    show(offsetptr, 17);
-  
-}
 /**
  * @brief  Initializes the RCC clock configuration.
  *
@@ -683,16 +407,15 @@ int main(void) {
   clock_init();
 
   initSpi();
-  initI2C();
+  unsigned int i2c = initI2C();
+  init_is31fl3731(i2c, SCROLLBIT_ADDR);
+  scroll_text(i2c, SCROLLBIT_ADDR, "this is a test");
 
   screen_init();
   // draw_drag();
 
   // playTone();
 
-  scroll_init();
-  scroll_clear();
-  scroll_text("code was refactored");
 
   // if they hit reset the second time, go to app
   board_set_rtc_signature(APP_RTC_SIGNATURE, 0);

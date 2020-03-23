@@ -1,0 +1,6 @@
+make: Entering directory '/home/ni4ha4/repos/uf2-meowbit'
+Generating object build/meowbit/main.o
+arm-none-eabi-gcc -c -MMD -std=gnu99 -g -Wundef -Wall -fno-builtin -Ilibopencm3/include -Iboards/meowbit -ffunction-sections -nostartfiles -lnosys -Wl,-gc-sections -Wl,-g -Wno-unused -Werror -mthumb -mcpu=cortex-m4 -mfloat-abi=hard -mfpu=fpv4-sp-d16 -DSTM32F4 -Tlinker/stm32f4.ld  -Llibopencm3/lib -lopencm3_stm32f4 -DSTM32F401 -o build/meowbit/main.o main.c
+arm-none-eabi-gcc -o build/meowbit/bootloader.elf build/meowbit/bl.o build/meowbit/test.bmp.o build/meowbit/empty.bmp.o build/meowbit/ghostfat.o build/meowbit/dmesg.o build/meowbit/screen.o build/meowbit/images.o build/meowbit/settings.o build/meowbit/hf2.o build/meowbit/support.o build/meowbit/util.o build/meowbit/main.o -std=gnu99 -g -Wundef -Wall -fno-builtin -Ilibopencm3/include -Iboards/meowbit -ffunction-sections -nostartfiles -lnosys -Wl,-gc-sections -Wl,-g -Wno-unused -Werror -mthumb -mcpu=cortex-m4 -mfloat-abi=hard -mfpu=fpv4-sp-d16 -DSTM32F4 -Tlinker/stm32f4.ld  -Llibopencm3/lib -lopencm3_stm32f4 -DSTM32F401 -Wl,-Map=build/meowbit/bootloader.elf.map
+Makefile:118: recipe for target 'build/meowbit/bootloader.elf' failed
+make: Leaving directory '/home/ni4ha4/repos/uf2-meowbit'
