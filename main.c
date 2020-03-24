@@ -8,6 +8,7 @@
 #include "img.h"
 #include "scrollbit.h"
 #include "is31fl3731.h"
+#include "servo.h"
 #include <string.h>
 
 #include <libopencm3/cm3/scb.h>
@@ -407,14 +408,26 @@ int main(void) {
   clock_init();
 
   initSpi();
-  unsigned int i2c = initI2C();
-  init_is31fl3731(i2c, SCROLLBIT_ADDR);
-  scroll_text(i2c, SCROLLBIT_ADDR, "this is a test");
+  //unsigned int i2c = initI2C();
+  //init_is31fl3731(i2c, SCROLLBIT_ADDR);
+  //scroll_text(i2c, SCROLLBIT_ADDR, "this is a test");
 
   screen_init();
   // draw_drag();
 
   // playTone();
+  i2c_device pca9685;
+  pca9685.i2c = initI2C();
+  pca9685.i2c_addr = 0x40;
+  init_pca9685(&pca9685);
+
+  servo_set_deg(&pca9685, S1, 0);
+  delay(100);
+  servo_set_deg(&pca9685, S1, -90);
+  delay(2000);
+  servo_set_deg(&pca9685, S1, 90);
+  delay(2000);
+  
 
 
   // if they hit reset the second time, go to app
