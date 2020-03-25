@@ -1,6 +1,8 @@
 #include "i2chelper.h"
 #include "pca9685.h"
 
+#ifndef SERVO_H
+#define SERVO_H
 typedef enum{
   S1 = 0x01,
   S2 = 0x02,
@@ -12,4 +14,5 @@ typedef enum{
   S8 = 0x08
 } Servo;
 
-void servo_set_deg(i2c_device *dev, Servo s, int16_t deg);
+void servo_set_deg(i2c_device *dev, Servo s, int16_t deg, uint8_t delay);
+#endif /* SERVO_H */

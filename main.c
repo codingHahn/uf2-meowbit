@@ -9,6 +9,7 @@
 #include "scrollbit.h"
 #include "is31fl3731.h"
 #include "servo.h"
+#include "leg.h"
 #include <string.h>
 
 #include <libopencm3/cm3/scb.h>
@@ -421,14 +422,14 @@ int main(void) {
   pca9685.i2c_addr = 0x40;
   init_pca9685(&pca9685);
 
-  while (1) {
-    servo_set_deg(&pca9685, S8, 0);
-    delay(4000);
-    servo_set_deg(&pca9685, S8, -90);
-    delay(4000);
-    servo_set_deg(&pca9685, S8, 90);
-    delay(4000);
-  }
+  delay(500);
+  move_leg(&pca9685, &leg1);
+  delay(500);
+  move_leg(&pca9685, &leg2);
+  delay(500);
+  move_leg(&pca9685, &leg3);
+  delay(500);
+  move_leg(&pca9685, &leg4);
 
   // if they hit reset the second time, go to app
   board_set_rtc_signature(APP_RTC_SIGNATURE, 0);
