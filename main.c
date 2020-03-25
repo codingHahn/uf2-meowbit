@@ -421,14 +421,14 @@ int main(void) {
   pca9685.i2c_addr = 0x40;
   init_pca9685(&pca9685);
 
-  servo_set_deg(&pca9685, S1, 0);
-  delay(100);
-  servo_set_deg(&pca9685, S1, -90);
-  delay(2000);
-  servo_set_deg(&pca9685, S1, 90);
-  delay(2000);
-  
-
+  while (1) {
+    servo_set_deg(&pca9685, S8, 0);
+    delay(4000);
+    servo_set_deg(&pca9685, S8, -90);
+    delay(4000);
+    servo_set_deg(&pca9685, S8, 90);
+    delay(4000);
+  }
 
   // if they hit reset the second time, go to app
   board_set_rtc_signature(APP_RTC_SIGNATURE, 0);

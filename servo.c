@@ -14,5 +14,5 @@ uint8_t min_deg = 0;
 float resulting_on_precent = ((float)(deg - min_deg)) / (max_deg - min_deg) * 
 	(max_percent - min_percent) + min_percent;
 
-setpwm_pca9685(dev, s + 7, (uint8_t)resulting_on_precent, 0);
+setpwm_pca9685(dev, s + 7, (uint8_t)resulting_on_precent, 10);
 }

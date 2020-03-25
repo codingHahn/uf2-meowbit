@@ -1,6 +1,7 @@
-#include <stdint.h>
-#include <libopencm3/stm32/i2c.h>
+#include "bl.h"
 #include "i2chelper.h"
+#include <libopencm3/stm32/i2c.h>
+#include <stdint.h>
 
 #define PCA9685_ADDR 0x40
 
@@ -20,9 +21,15 @@ void setfreq_pca9685(i2c_device* dev, unsigned int freq) {
   prescale_val /= freq;
   prescale_val -= 1;
 
-  write_register8(dev->i2c, dev->i2c_addr, PCA9685_MODE1, 0x01);
+  uint8_t mode1;
+  read_register8(dev->i2c, dev->i2c_addr, PCA9685_MODE1, &mode1);
+  uint8_t reset_mode1 = (mode1 & 0x7F) | 0x10;
+
+  write_register8(dev->i2c, dev->i2c_addr, PCA9685_MODE1, reset_mode1);
   write_register8(dev->i2c, dev->i2c_addr, PCA9685_PRESCALE, (uint8_t)prescale_val);
-  write_register8(dev->i2c, dev->i2c_addr, PCA9685_MODE1, 0x00);
+  write_register8(dev->i2c, dev->i2c_addr, PCA9685_MODE1, mode1);
+  delay(100);
+  write_register8(dev->i2c, dev->i2c_addr, PCA9685_MODE1, mode1 | 0xa1);
 }
 
 void init_pca9685(i2c_device *dev) {
