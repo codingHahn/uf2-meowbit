@@ -8,8 +8,7 @@
 #include "img.h"
 #include "scrollbit.h"
 #include "is31fl3731.h"
-#include "servo.h"
-#include "leg.h"
+#include "robot.h"
 #include <string.h>
 
 #include <libopencm3/cm3/scb.h>
@@ -414,41 +413,42 @@ int main(void) {
   //scroll_text(i2c, SCROLLBIT_ADDR, "this is a test");
 
   screen_init();
-  // draw_drag();
 
-  // playTone();
   i2c_device pca9685;
   pca9685.i2c = initI2C();
   pca9685.i2c_addr = 0x40;
   init_pca9685(&pca9685);
 
+  robot_t robot;
+  robot.dev = &pca9685;
+  robot.leg1 = &leg1;
+  robot.leg2 = &leg2;
+  robot.leg3 = &leg3;
+  robot.leg4 = &leg4;
+
   delay(500);
-  move_leg_to_deg(&pca9685, &leg1, leg1.base_deg);
-  move_leg_to_deg(&pca9685, &leg3, leg3.base_deg);
+  move_leg_to_deg(&pca9685, &leg1, -30);
+  move_leg_to_deg(&pca9685, &leg3, -40);
   delay(500);
-  move_leg_to_deg(&pca9685, &leg2, leg2.base_deg);
-  move_leg_to_deg(&pca9685, &leg4, leg4.base_deg);
+  move_leg_to_deg(&pca9685, &leg2, 10);
+  move_leg_to_deg(&pca9685, &leg4, 0);
   delay(2000);
 
-  stand_up(&pca9685, &leg1, &leg2, &leg3, &leg4);
-
-  //move_leg_to_deg(&pca9685, &leg4, -90);
-  //delay(500);
-
-  move_leg_to_deg(&pca9685, &leg1, 45);
-  //delay(500);
-  move_leg_to_deg(&pca9685, &leg3, 45);
-  delay(500);
-  move_leg_to_deg(&pca9685, &leg2, -45);
-  //delay(500);
-  move_leg_to_deg(&pca9685, &leg4, -45);
-
-  move_leg_to_deg(&pca9685, &leg1, 65);
-  delay(500);
-  lift_leg(&pca9685, &leg3);
-  move_leg_on_ground(&pca9685, &leg1, 45);
-  move_leg_on_ground(&pca9685, &leg2, -65);
-  move_leg_on_ground(&pca9685, &leg4, -25);
+  // Swing back and forth
+  while(1) {
+    lift_leg(&pca9685, &leg1);
+    lift_leg(&pca9685, &leg4);
+    delay(1000);
+    lower_leg(&pca9685, &leg2);
+    lower_leg(&pca9685, &leg3);
+    delay(1000);
+    lift_leg(&pca9685, &leg2);
+    lift_leg(&pca9685, &leg3);
+    delay(1000);
+    lower_leg(&pca9685, &leg1);
+    lower_leg(&pca9685, &leg4);
+    delay(1000);
+  }
 
   // if they hit reset the second time, go to app
   board_set_rtc_signature(APP_RTC_SIGNATURE, 0);
