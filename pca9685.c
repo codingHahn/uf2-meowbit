@@ -50,7 +50,7 @@ void setdutycycle_pca9685(i2c_device *dev, uint8_t pin, uint16_t on, uint16_t of
   i2c_transfer7(dev->i2c, dev->i2c_addr, buffer, 5, NULL, 0);
 }
 
-void setpwm_pca9685(i2c_device *dev, uint8_t pin, uint8_t on_percent, uint8_t delay_percent) {
+void setpwm_pca9685(i2c_device *dev, uint8_t pin, float on_percent, uint8_t delay_percent) {
   if (on_percent < 1 || on_percent > 100)
     return;
 
@@ -62,7 +62,7 @@ void setpwm_pca9685(i2c_device *dev, uint8_t pin, uint8_t on_percent, uint8_t de
     on_tmp = 0;
   else
     on_tmp = 4096 * (((float)delay_percent) / 100) - 1;
-  on_time = 4096 * (((float)on_percent) / 100) - 1;
+  on_time = 4096 * (on_percent / 100) - 1;
   off_tmp = on_tmp + on_time - 1;
 
   uint16_t on = (uint16_t)on_tmp;

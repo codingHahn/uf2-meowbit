@@ -15,5 +15,5 @@ void servo_set_deg(i2c_device *dev, Servo s, int16_t deg, uint8_t delay) {
                                    (max_percent - min_percent) +
                                min_percent;
 
-  setpwm_pca9685(dev, s + 7, (uint8_t)resulting_on_precent, delay);
+  setpwm_pca9685(dev, s + 7, resulting_on_precent, delay);
 }

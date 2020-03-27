@@ -168,4 +168,6 @@ checksubmodules: updatesubmodules
 updatesubmodules:
 	$(Q) (git submodule init)
 	$(Q) (git submodule update)
-
+.PHONY: cp
+cp:
+	cp build/meowbit/flasher.uf2 /media/ni4ha4/ARCADE-F4/

@@ -423,13 +423,32 @@ int main(void) {
   init_pca9685(&pca9685);
 
   delay(500);
-  move_leg(&pca9685, &leg1);
+  move_leg_to_deg(&pca9685, &leg1, leg1.base_deg);
+  move_leg_to_deg(&pca9685, &leg3, leg3.base_deg);
   delay(500);
-  move_leg(&pca9685, &leg2);
+  move_leg_to_deg(&pca9685, &leg2, leg2.base_deg);
+  move_leg_to_deg(&pca9685, &leg4, leg4.base_deg);
+  delay(2000);
+
+  stand_up(&pca9685, &leg1, &leg2, &leg3, &leg4);
+
+  //move_leg_to_deg(&pca9685, &leg4, -90);
+  //delay(500);
+
+  move_leg_to_deg(&pca9685, &leg1, 45);
+  //delay(500);
+  move_leg_to_deg(&pca9685, &leg3, 45);
   delay(500);
-  move_leg(&pca9685, &leg3);
+  move_leg_to_deg(&pca9685, &leg2, -45);
+  //delay(500);
+  move_leg_to_deg(&pca9685, &leg4, -45);
+
+  move_leg_to_deg(&pca9685, &leg1, 65);
   delay(500);
-  move_leg(&pca9685, &leg4);
+  lift_leg(&pca9685, &leg3);
+  move_leg_on_ground(&pca9685, &leg1, 45);
+  move_leg_on_ground(&pca9685, &leg2, -65);
+  move_leg_on_ground(&pca9685, &leg4, -25);
 
   // if they hit reset the second time, go to app
   board_set_rtc_signature(APP_RTC_SIGNATURE, 0);
