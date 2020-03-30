@@ -15,3 +15,4 @@ typedef struct {
 } robot_t;
 
 void stand_up(robot_t *robot, uint8_t deg);
+void swing(robot_t *robot, uint64_t repetitions);

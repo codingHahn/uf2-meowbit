@@ -21,8 +21,8 @@ void move_leg(i2c_device *dev, leg_t *leg) {
  * Lift *leg up 90 degrees
  */
 void lift_leg(i2c_device *dev, leg_t *leg) {
-  servo_set_deg(dev, leg->tip, 90*leg->multiplier, leg->offset + 10);
-  leg->tip_deg = 90*leg->multiplier;
+  servo_set_deg(dev, leg->tip, 80*leg->multiplier, leg->offset + 10);
+  leg->tip_deg = 80*leg->multiplier;
 }
 
 /*

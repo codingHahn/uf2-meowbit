@@ -42,6 +42,7 @@ export FLAGS		 = -std=gnu99 \
 			   -ffunction-sections \
 			   -nostartfiles \
 			   -lnosys \
+			   -lm \
 			   -Wl,-gc-sections \
 			   -Wl,-g \
 			   -Wno-unused \

@@ -10,6 +10,7 @@
 #include "is31fl3731.h"
 #include "robot.h"
 #include <string.h>
+#include <math.h>
 
 #include <libopencm3/cm3/scb.h>
 #include <libopencm3/cm3/systick.h>
@@ -426,6 +427,7 @@ int main(void) {
   robot.leg3 = &leg3;
   robot.leg4 = &leg4;
 
+  //TODO: Reset robot so that initial position can be set with zeroes
   delay(500);
   move_leg_to_deg(&pca9685, &leg1, -30);
   move_leg_to_deg(&pca9685, &leg3, -40);
@@ -434,21 +436,8 @@ int main(void) {
   move_leg_to_deg(&pca9685, &leg4, 0);
   delay(2000);
 
-  // Swing back and forth
-  while(1) {
-    lift_leg(&pca9685, &leg1);
-    lift_leg(&pca9685, &leg4);
-    delay(1000);
-    lower_leg(&pca9685, &leg2);
-    lower_leg(&pca9685, &leg3);
-    delay(1000);
-    lift_leg(&pca9685, &leg2);
-    lift_leg(&pca9685, &leg3);
-    delay(1000);
-    lower_leg(&pca9685, &leg1);
-    lower_leg(&pca9685, &leg4);
-    delay(1000);
-  }
+  swing(&robot, 200000);
+
 
   // if they hit reset the second time, go to app
   board_set_rtc_signature(APP_RTC_SIGNATURE, 0);
