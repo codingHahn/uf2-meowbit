@@ -2,6 +2,9 @@
 #include "robot.h"
 #include <math.h>
 
+//TODO: Move movement functions into own header and figure out
+//      For what this file should be used
+
 void stand_up(robot_t *robot, uint8_t deg) { 
   servo_set_deg(robot->dev, robot->leg1->tip, deg*robot->leg1->multiplier, robot->leg1->offset);
   robot->leg1->tip_deg = deg*robot->leg1->multiplier;
@@ -37,6 +40,7 @@ void swing(robot_t *robot, uint64_t repetitions) {
   }
 }
 
+//TODO: Implement a walk function using trigonomitry
 void walk(robot_t *robot) {
   while (1) {
     lower_leg(robot->dev, robot->leg2);

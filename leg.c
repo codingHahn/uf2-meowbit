@@ -1,6 +1,8 @@
 #include "leg.h"
 #include "bl.h"
 
+//TODO: Figure out if multiplier is used by the caller or these functions here
+
 /*
  * legs of robot. Global variables
  */
