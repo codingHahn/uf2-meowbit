@@ -428,15 +428,15 @@ int main(void) {
   robot.leg4 = &leg4;
 
   //TODO: Reset robot so that initial position can be set with zeroes
-  delay(500);
-  move_leg_to_deg(&pca9685, &leg1, -30);
-  move_leg_to_deg(&pca9685, &leg3, -40);
-  delay(500);
-  move_leg_to_deg(&pca9685, &leg2, 10);
+  move_leg_to_deg(&pca9685, &leg1, 0);
+  move_leg_to_deg(&pca9685, &leg3, 0);
+  move_leg_to_deg(&pca9685, &leg2, 0);
   move_leg_to_deg(&pca9685, &leg4, 0);
-  delay(2000);
+  stand_up(&robot, 30);
+  delay(1000);
 
-  swing(&robot, 200000);
+  //swing(&robot, 200000);
+  spin_sin(&robot);
 
 
   // if they hit reset the second time, go to app

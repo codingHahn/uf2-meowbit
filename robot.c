@@ -16,19 +16,172 @@ void stand_up(robot_t *robot, uint8_t deg) {
 void swing(robot_t *robot, uint64_t repetitions) {
   double phaseshift = 90 * (M_PI / 180);
   uint64_t counter = 0;
-  
-  while(counter < repetitions) {
-    //TODO: Count actual cycles and not just this while loop
+
+  while (counter < repetitions) {
+    // TODO: Count actual cycles and not just this while loop
     //	    Maybe through interrups?
-    robot->leg1->tip_deg = sin(counter * (M_PI / 180))* 80* robot->leg1->multiplier;
-    robot->leg4->tip_deg = sin(counter * (M_PI / 180))* 80* robot->leg2->multiplier;
-    robot->leg2->tip_deg = sin(counter * (M_PI / 180)+phaseshift)* 80* robot->leg4->multiplier;
-    robot->leg3->tip_deg = sin(counter * (M_PI / 180)+phaseshift)* 80* robot->leg3->multiplier;
+    robot->leg1->tip_deg =
+        sin(counter * (M_PI / 180)) * 80 * robot->leg1->multiplier;
+    robot->leg4->tip_deg =
+        sin(counter * (M_PI / 180)) * 80 * robot->leg2->multiplier;
+    robot->leg2->tip_deg =
+        sin(counter * (M_PI / 180) + phaseshift) * 80 * robot->leg4->multiplier;
+    robot->leg3->tip_deg =
+        sin(counter * (M_PI / 180) + phaseshift) * 80 * robot->leg3->multiplier;
     counter++;
     move_leg(robot->dev, robot->leg1);
     move_leg(robot->dev, robot->leg2);
     move_leg(robot->dev, robot->leg3);
     move_leg(robot->dev, robot->leg4);
     delay(5);
+  }
+}
+
+void walk(robot_t *robot) {
+  while (1) {
+    lower_leg(robot->dev, robot->leg2);
+    lower_leg(robot->dev, robot->leg4);
+    delay(200);
+    lift_leg(robot->dev, robot->leg1);
+    lift_leg(robot->dev, robot->leg3);
+
+    move_leg_on_ground(robot->dev, robot->leg1, -90);
+    move_leg_on_ground(robot->dev, robot->leg3, 0);
+    move_leg_on_ground(robot->dev, robot->leg2, 0);
+    move_leg_on_ground(robot->dev, robot->leg4, -90);
+
+    delay(400);
+    lower_leg(robot->dev, robot->leg1);
+    lower_leg(robot->dev, robot->leg3);
+    delay(200);
+    lift_leg(robot->dev, robot->leg2);
+    lift_leg(robot->dev, robot->leg4);
+
+    move_leg_on_ground(robot->dev, robot->leg2, -90);
+    move_leg_on_ground(robot->dev, robot->leg4, 0);
+    move_leg_on_ground(robot->dev, robot->leg1, 0);
+    move_leg_on_ground(robot->dev, robot->leg3, -90);
+    delay(400);
+  }
+}
+
+void spin_sin(robot_t *robot) {
+
+  double phaseshift = 90 * (M_PI / 180);
+
+  uint64_t counter = 0;
+
+  while (1) {
+    // TODO: Count actual cycles and not just this while loop
+    //	    Maybe through interrups?
+    robot->leg1->tip_deg =
+        sin(counter * (M_PI / 180)) * 90 * robot->leg1->multiplier;
+    robot->leg3->tip_deg =
+        sin(counter * (M_PI / 180)) * 90 * robot->leg3->multiplier;
+
+    robot->leg4->tip_deg =
+        sin(counter * (M_PI / 180) + phaseshift) * 90 * robot->leg2->multiplier;
+    robot->leg2->tip_deg =
+        sin(counter * (M_PI / 180) + phaseshift) * 90 * robot->leg4->multiplier;
+
+    robot->leg2->base_deg = 
+        (sin(counter * (M_PI / 180) + phaseshift) * -45 - 45)*  robot->leg2->multiplier;
+    robot->leg4->base_deg = 
+        (sin(counter * (M_PI / 180) + phaseshift) * -45 - 45)*  robot->leg4->multiplier;
+    robot->leg1->base_deg = 
+        (sin(counter * (M_PI / 180)) * -45 - 45)* robot->leg1->multiplier;
+    robot->leg3->base_deg = 
+        (sin(counter * (M_PI / 180)) * -45 - 45)* robot->leg3->multiplier;
+    move_leg(robot->dev, robot->leg1);
+    move_leg(robot->dev, robot->leg2);
+    move_leg(robot->dev, robot->leg3);
+    move_leg(robot->dev, robot->leg4);
+    delay(5);
+    counter++;
+  }
+}
+
+void spin(robot_t *robot) { 
+  while (1) {
+    delay(200);
+    lower_leg(robot->dev, robot->leg2);
+    lower_leg(robot->dev, robot->leg4);
+    delay(100);
+    lift_leg(robot->dev, robot->leg1);
+    lift_leg(robot->dev, robot->leg3);
+    delay(200);
+
+    move_leg_on_ground(robot->dev, robot->leg1, 0);
+    move_leg_on_ground(robot->dev, robot->leg3, 0);
+    move_leg_on_ground(robot->dev, robot->leg2, 0);
+    move_leg_on_ground(robot->dev, robot->leg4, 0);
+    delay(200);
+
+    lower_leg(robot->dev, robot->leg1);
+    lower_leg(robot->dev, robot->leg3);
+    delay(100);
+    lift_leg(robot->dev, robot->leg2);
+    lift_leg(robot->dev, robot->leg4);
+    delay(200);
+
+    move_leg_on_ground(robot->dev, robot->leg1, -90);
+    move_leg_on_ground(robot->dev, robot->leg3, -90);
+    move_leg_on_ground(robot->dev, robot->leg2, -90);
+    move_leg_on_ground(robot->dev, robot->leg4, -90);
+    
+  }
+}
+
+void dance(robot_t *robot) { 
+  while (1) {
+    move_leg_on_ground(robot->dev, robot->leg2, -90);
+    move_leg_on_ground(robot->dev, robot->leg4, -90);
+
+    delay(200);
+
+    lower_leg(robot->dev, robot->leg1);
+    lower_leg(robot->dev, robot->leg3);
+
+    lift_leg(robot->dev, robot->leg2);
+    lift_leg(robot->dev, robot->leg4);
+
+    delay(200);
+
+    move_leg_on_ground(robot->dev, robot->leg1, 0);
+    move_leg_on_ground(robot->dev, robot->leg3, 0);
+    delay(200);
+
+    lower_leg(robot->dev, robot->leg2);
+    lower_leg(robot->dev, robot->leg4);
+    lift_leg(robot->dev, robot->leg1);
+    lift_leg(robot->dev, robot->leg3);
+
+    delay(200);
+
+    move_leg_on_ground(robot->dev, robot->leg2, 0);
+    move_leg_on_ground(robot->dev, robot->leg4, 0);
+
+    delay(200);
+
+    lift_leg(robot->dev, robot->leg2);
+    lift_leg(robot->dev, robot->leg4);
+
+    lower_leg(robot->dev, robot->leg1);
+    lower_leg(robot->dev, robot->leg3);
+
+    delay(200);
+    
+    move_leg_on_ground(robot->dev, robot->leg1, -90);
+    move_leg_on_ground(robot->dev, robot->leg3, -90);
+
+    delay(200);
+
+    lower_leg(robot->dev, robot->leg2);
+    lower_leg(robot->dev, robot->leg4);
+
+    lift_leg(robot->dev, robot->leg1);
+    lift_leg(robot->dev, robot->leg3);
+
+    delay(200);
   }
 }

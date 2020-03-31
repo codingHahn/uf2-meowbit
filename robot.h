@@ -16,3 +16,6 @@ typedef struct {
 
 void stand_up(robot_t *robot, uint8_t deg);
 void swing(robot_t *robot, uint64_t repetitions);
+void walk(robot_t *robot);
+void spin(robot_t *robot);
+void spin_sin(robot_t *robot);
