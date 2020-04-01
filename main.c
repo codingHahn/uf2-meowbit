@@ -427,7 +427,6 @@ int main(void) {
   robot.leg3 = &leg3;
   robot.leg4 = &leg4;
 
-  //TODO: Reset robot so that initial position can be set with zeroes
   move_leg_to_deg(&pca9685, &leg1, 0);
   move_leg_to_deg(&pca9685, &leg3, 0);
   move_leg_to_deg(&pca9685, &leg2, 0);

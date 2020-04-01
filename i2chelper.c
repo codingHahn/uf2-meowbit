@@ -2,8 +2,8 @@
 #include <libopencm3/stm32/i2c.h>
 
 /*
- * Inspiried by the Adafruit lib for the IS31FL3731
- * basically a C port
+ * Very lean helper functions that handle reading and writing
+ * to 8 bit registers common in i2c devices
  */
 
 void write_register8(unsigned int i2c, uint8_t i2c_addr, uint8_t reg, uint8_t data) {

@@ -6,6 +6,12 @@
 #include <libopencmsis/core_cm3.h>
 #include <libopencm3/stm32/i2c.h>
 
+/*
+ * Inspiried by the Adafruit lib for the IS31FL3731
+ * basically a C port
+ */
+
+
 void init_is31fl3731(unsigned int i2c, uint8_t i2c_addr) {
   write_register8(i2c, i2c_addr, MATRIX_CMD_REG,  MATRIX_BANK_FUNCTIONREG);
   write_register8(i2c, i2c_addr, MATRIX_REG_SHUTDOWN, 0x00);
@@ -77,6 +83,7 @@ void adjust_buffer(uint8_t *buffer, unsigned int length) {
 void is31fl3731_show(unsigned int i2c, uint8_t i2c_addr, uint8_t *buffer, unsigned int length) {
   uint8_t tmp[length];
   memcpy(tmp, buffer, length);
+  //TODO: Move adjust_buffer out of is31fl3731.c
   adjust_buffer(tmp, length);
   for (uint8_t frame = 0; frame < 8; frame++) {
     for (uint8_t i = 0; i <= 0x11; i++) {
