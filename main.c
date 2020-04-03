@@ -27,6 +27,8 @@
 
 const uint8_t SCROLLBIT_ADDR = 0x74;
 
+uint64_t counter = 0;
+
 /* flash parameters that we should not really know */
 static struct {
   uint32_t sector_number;
@@ -340,6 +342,34 @@ static unsigned int initI2C() {
   return I2C1;
 }
 
+static void tim_setup(void) {
+  rcc_periph_clock_enable(RCC_TIM2);
+
+  nvic_enable_irq(NVIC_TIM2_IRQ);
+
+  rcc_periph_reset_pulse(RST_TIM2);
+
+  timer_set_mode(TIM2, TIM_CR1_CKD_CK_INT, TIM_CR1_CMS_EDGE, TIM_CR1_DIR_UP);
+
+  timer_set_prescaler(TIM2, ((rcc_apb1_frequency * 2) / 5000));
+
+  timer_set_period(TIM2, 9);
+
+  timer_enable_counter(TIM2);
+
+  timer_enable_irq(TIM2, TIM_DIER_UIE);
+}
+
+void tim2_isr(void) {
+
+  if (timer_get_flag(TIM2, TIM_SR_CC1IF)) {
+    timer_clear_flag(TIM2, TIM_SR_CC1IF);
+    
+    counter++;
+  }
+
+}
+
 
 
 /**
@@ -412,6 +442,8 @@ int main(void) {
   //unsigned int i2c = initI2C();
   //init_is31fl3731(i2c, SCROLLBIT_ADDR);
   //scroll_text(i2c, SCROLLBIT_ADDR, "this is a test");
+
+  tim_setup();
 
   screen_init();
 
