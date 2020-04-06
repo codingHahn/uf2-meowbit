@@ -368,7 +368,7 @@ void tim2_isr(void) {
     
     timer_disable_irq(TIM2, TIM_DIER_UIE);
     counter++;
-    spin_sin_int(robot, counter);
+    walk_sin_int(robot, counter);
     timer_enable_irq(TIM2, TIM_DIER_UIE);
   }
 

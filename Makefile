@@ -34,6 +34,7 @@ EXTRAFLAGS ?= -D$(CPUTYPE)
 #
 export FLAGS		 = -std=gnu99 \
 			   -g \
+			   -O3 \
 			   -Wundef \
 			   -Wall \
 			   -fno-builtin \
@@ -49,7 +50,7 @@ export FLAGS		 = -std=gnu99 \
 			   -Wno-unused \
 			   -Werror
 
-export COMMON_SRCS	 = bl.c test.bmp.c empty.bmp.c ghostfat.c dmesg.c screen.c images.c settings.c hf2.c support.c util.c is31fl3731.c i2chelper.c matrix_text.c scrollbit.c alphabet.c pca9685.c servo.c leg.c robot.c
+export COMMON_SRCS	 = bl.c test.bmp.c empty.bmp.c ghostfat.c dmesg.c screen.c images.c settings.c hf2.c support.c util.c is31fl3731.c i2chelper.c matrix_text.c scrollbit.c alphabet.c pca9685.c servo.c leg.c robot.c fastmath.c
 
 
 SRCS		 = $(COMMON_SRCS) main.c
@@ -98,7 +99,7 @@ ELF		 = $(BUILD_DIR)/bootloader.elf
 BINARY		 = $(BUILD_DIR)/bootloader.bin
 UF2		 = $(BUILD_DIR)/flasher.uf2
 
-FL_OBJS = $(addprefix $(BUILD_DIR)/, bl.o test.bmp.o empty.bmp.o main-flasher.o util.o dmesg.o screen.o images.o settings.o is31fl3731.o i2chelper.o matrix_text.o scrollbit.o alphabet.o support.o pca9685.o servo.o leg.o robot.o)
+FL_OBJS = $(addprefix $(BUILD_DIR)/, bl.o test.bmp.o empty.bmp.o main-flasher.o util.o dmesg.o screen.o images.o settings.o is31fl3731.o i2chelper.o matrix_text.o scrollbit.o alphabet.o support.o pca9685.o servo.o leg.o robot.o fastmath.o)
 
 do-build:		$(BUILD_DIR) $(ELF) $(BINARY) $(UF2) $(DBGFILE)
 

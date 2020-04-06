@@ -1,5 +1,6 @@
 #include "bl.h"
 #include "robot.h"
+#include "fastmath.h"
 #include <math.h>
 
 //TODO: Move movement functions into own header and figure out
@@ -69,6 +70,38 @@ void walk(robot_t *robot) {
   }
 }
 
+void walk_sin_int(robot_t *robot, uint64_t counter) {
+  float phaseshift = 90;
+  float sin1 = fast_sin(counter);
+  float sin_shift = fast_sin(counter + phaseshift);
+
+  // TODO: Count actual cycles and not just this while loop
+  //	    Maybe through interrups?
+  robot->leg2->tip_deg =
+      sin_shift * 90 * robot->leg2->multiplier;
+  robot->leg4->tip_deg =
+      sin_shift * 90 * robot->leg4->multiplier;
+
+  robot->leg1->tip_deg =
+      sin1 * 90 * robot->leg1->multiplier;
+  robot->leg3->tip_deg =
+      sin1 * 90 * robot->leg3->multiplier;
+
+  robot->leg1->base_deg =
+      (sin1 * 45 - 45) *
+      robot->leg1->multiplier;
+  robot->leg4->base_deg =
+      (sin1 * -45 - 45) *
+      robot->leg4->multiplier;
+  robot->leg2->base_deg =
+      (sin_shift * -45 - 45) * robot->leg2->multiplier;
+  robot->leg3->base_deg =
+      (sin_shift * 45 - 45) * robot->leg3->multiplier;
+  move_leg(robot->dev, robot->leg1);
+  move_leg(robot->dev, robot->leg2);
+  move_leg(robot->dev, robot->leg3);
+  move_leg(robot->dev, robot->leg4);
+}
 void spin_sin(robot_t *robot) {
 
   double phaseshift = 90 * (M_PI / 180);
@@ -84,9 +117,9 @@ void spin_sin(robot_t *robot) {
         sin(counter * (M_PI / 180)) * 90 * robot->leg3->multiplier;
 
     robot->leg4->tip_deg =
-        sin(counter * (M_PI / 180) + phaseshift) * 90 * robot->leg2->multiplier;
-    robot->leg2->tip_deg =
         sin(counter * (M_PI / 180) + phaseshift) * 90 * robot->leg4->multiplier;
+    robot->leg2->tip_deg =
+        sin(counter * (M_PI / 180) + phaseshift) * 90 * robot->leg2->multiplier;
 
     robot->leg2->base_deg = 
         (sin(counter * (M_PI / 180) + phaseshift) * -45 - 45)*  robot->leg2->multiplier;
@@ -106,33 +139,32 @@ void spin_sin(robot_t *robot) {
 }
 
 void spin_sin_int(robot_t *robot, uint64_t counter) {
-
-  float phaseshift = 90 * (M_PI / 180);
-  float sin1 = sin(counter * (M_PI / 180));
-  float sin_shift = sin(counter * (M_PI / 180) + phaseshift);
+  float phaseshift = 90;
+  float sin1 = fast_sin(counter);
+  float sin_shift = fast_sin(counter + phaseshift);
 
   // TODO: Count actual cycles and not just this while loop
   //	    Maybe through interrups?
+  robot->leg2->tip_deg =
+      sin_shift * 90 * robot->leg2->multiplier;
+  robot->leg4->tip_deg =
+      sin_shift * 90 * robot->leg4->multiplier;
+
   robot->leg1->tip_deg =
       sin1 * 90 * robot->leg1->multiplier;
   robot->leg3->tip_deg =
       sin1 * 90 * robot->leg3->multiplier;
 
-  robot->leg4->tip_deg =
-      sin_shift * 90 * robot->leg2->multiplier;
-  robot->leg2->tip_deg =
-      sin_shift * 90 * robot->leg4->multiplier;
-
   robot->leg2->base_deg =
-      (sin_shift * -45 - 45) *
+      (sin1 * -45 - 45) *
       robot->leg2->multiplier;
   robot->leg4->base_deg =
-      (sin_shift * -45 - 45) *
+      (sin1 * -45 - 45) *
       robot->leg4->multiplier;
   robot->leg1->base_deg =
-      (sin1 * -45 - 45) * robot->leg1->multiplier;
+      (sin_shift * -45 - 45) * robot->leg1->multiplier;
   robot->leg3->base_deg =
-      (sin1 * -45 - 45) * robot->leg3->multiplier;
+      (sin_shift * -45 - 45) * robot->leg3->multiplier;
   move_leg(robot->dev, robot->leg1);
   move_leg(robot->dev, robot->leg2);
   move_leg(robot->dev, robot->leg3);
