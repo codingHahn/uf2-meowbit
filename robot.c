@@ -77,26 +77,16 @@ void walk_sin_int(robot_t *robot, uint64_t counter) {
 
   // TODO: Count actual cycles and not just this while loop
   //	    Maybe through interrups?
-  robot->leg2->tip_deg =
-      sin_shift * 90 * robot->leg2->multiplier;
-  robot->leg4->tip_deg =
-      sin_shift * 90 * robot->leg4->multiplier;
+  robot->leg2->tip_deg = sin1 * 90 * robot->leg2->multiplier;
+  robot->leg4->tip_deg = sin1 * 90 * robot->leg4->multiplier;
+  robot->leg1->tip_deg = sin_shift * 90 * robot->leg1->multiplier;
+  robot->leg3->tip_deg = sin_shift * 90 * robot->leg3->multiplier;
 
-  robot->leg1->tip_deg =
-      sin1 * 90 * robot->leg1->multiplier;
-  robot->leg3->tip_deg =
-      sin1 * 90 * robot->leg3->multiplier;
+  robot->leg1->base_deg = (sin_shift * -45 - 45) * robot->leg1->multiplier;
+  robot->leg4->base_deg = (sin_shift * -45 - 45) * robot->leg4->multiplier;
+  robot->leg2->base_deg = (sin1 * -45 - 45) * robot->leg2->multiplier;
+  robot->leg3->base_deg = (sin1 * -45 - 45) * robot->leg3->multiplier;
 
-  robot->leg1->base_deg =
-      (sin1 * 45 - 45) *
-      robot->leg1->multiplier;
-  robot->leg4->base_deg =
-      (sin1 * -45 - 45) *
-      robot->leg4->multiplier;
-  robot->leg2->base_deg =
-      (sin_shift * -45 - 45) * robot->leg2->multiplier;
-  robot->leg3->base_deg =
-      (sin_shift * 45 - 45) * robot->leg3->multiplier;
   move_leg(robot->dev, robot->leg1);
   move_leg(robot->dev, robot->leg2);
   move_leg(robot->dev, robot->leg3);
