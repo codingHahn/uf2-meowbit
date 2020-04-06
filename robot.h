@@ -19,3 +19,4 @@ void swing(robot_t *robot, uint64_t repetitions);
 void walk(robot_t *robot);
 void spin(robot_t *robot);
 void spin_sin(robot_t *robot);
+void spin_sin_int(robot_t *robot, uint64_t counter);

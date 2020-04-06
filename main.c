@@ -28,6 +28,7 @@
 const uint8_t SCROLLBIT_ADDR = 0x74;
 
 uint64_t counter = 0;
+robot_t* robot;
 
 /* flash parameters that we should not really know */
 static struct {
@@ -353,7 +354,7 @@ static void tim_setup(void) {
 
   timer_set_prescaler(TIM2, ((rcc_apb1_frequency * 2) / 5000));
 
-  timer_set_period(TIM2, 9);
+  timer_set_period(TIM2, 900);
 
   timer_enable_counter(TIM2);
 
@@ -362,10 +363,13 @@ static void tim_setup(void) {
 
 void tim2_isr(void) {
 
-  if (timer_get_flag(TIM2, TIM_SR_CC1IF)) {
-    timer_clear_flag(TIM2, TIM_SR_CC1IF);
+  if (timer_get_flag(TIM2, TIM_SR_UIF)) {
+    timer_clear_flag(TIM2, TIM_SR_UIF);
     
+    timer_disable_irq(TIM2, TIM_DIER_UIE);
     counter++;
+    spin_sin_int(robot, counter);
+    timer_enable_irq(TIM2, TIM_DIER_UIE);
   }
 
 }
@@ -443,7 +447,6 @@ int main(void) {
   //init_is31fl3731(i2c, SCROLLBIT_ADDR);
   //scroll_text(i2c, SCROLLBIT_ADDR, "this is a test");
 
-  tim_setup();
 
   screen_init();
 
@@ -452,22 +455,25 @@ int main(void) {
   pca9685.i2c_addr = 0x40;
   init_pca9685(&pca9685);
 
-  robot_t robot;
-  robot.dev = &pca9685;
-  robot.leg1 = &leg1;
-  robot.leg2 = &leg2;
-  robot.leg3 = &leg3;
-  robot.leg4 = &leg4;
+  robot_t r;
+  r.dev = &pca9685;
+  r.leg1 = &leg1;
+  r.leg2 = &leg2;
+  r.leg3 = &leg3;
+  r.leg4 = &leg4;
+
+  robot = &r;
 
   move_leg_to_deg(&pca9685, &leg1, 0);
   move_leg_to_deg(&pca9685, &leg3, 0);
   move_leg_to_deg(&pca9685, &leg2, 0);
   move_leg_to_deg(&pca9685, &leg4, 0);
-  stand_up(&robot, 30);
+  stand_up(robot, 30);
   delay(1000);
+  tim_setup();
 
   //swing(&robot, 200000);
-  spin_sin(&robot);
+  //spin_sin(robot);
 
 
   // if they hit reset the second time, go to app
