@@ -37,6 +37,7 @@ export FLAGS		 = -std=gnu99 \
 			   -Wundef \
 			   -Wall \
 			   -fno-builtin \
+			   -ffast-math \
 			   -I$(LIBOPENCM3)/include \
 			   -Iboards/$(BOARD) \
 			   -ffunction-sections \

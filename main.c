@@ -354,7 +354,7 @@ static void tim_setup(void) {
 
   timer_set_prescaler(TIM2, ((rcc_apb1_frequency * 2) / 5000));
 
-  timer_set_period(TIM2, 900);
+  timer_set_period(TIM2, 18);
 
   timer_enable_counter(TIM2);
 
