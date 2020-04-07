@@ -74,13 +74,15 @@ void walk_sin_int(robot_t *robot, uint64_t counter) {
   float phaseshift = 90;
   float sin1 = fast_sin(counter);
   float sin_shift = fast_sin(counter + phaseshift);
+  float trig = clamp((fast_triangle(counter) + 1) /2, 0, 1);
+  float trig_shift = clamp((fast_triangle(counter + 180) + 1) / 2, 0, 1);
 
   // TODO: Count actual cycles and not just this while loop
   //	    Maybe through interrups?
-  robot->leg2->tip_deg = sin1 * 90 * robot->leg2->multiplier;
-  robot->leg4->tip_deg = sin1 * 90 * robot->leg4->multiplier;
-  robot->leg1->tip_deg = sin_shift * 90 * robot->leg1->multiplier;
-  robot->leg3->tip_deg = sin_shift * 90 * robot->leg3->multiplier;
+  robot->leg2->tip_deg = trig * 90 * robot->leg2->multiplier;
+  robot->leg4->tip_deg = trig * 90 * robot->leg4->multiplier;
+  robot->leg1->tip_deg = trig_shift * 90 * robot->leg1->multiplier;
+  robot->leg3->tip_deg = trig_shift * 90 * robot->leg3->multiplier;
 
   robot->leg1->base_deg = (sin_shift * -45 - 45) * robot->leg1->multiplier;
   robot->leg4->base_deg = (sin_shift * -45 - 45) * robot->leg4->multiplier;
