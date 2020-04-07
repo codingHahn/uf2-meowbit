@@ -12,7 +12,6 @@
 #define MATRIX_REG_PICTURE_FRAME 0x01
 #define MATRIX_CMD_REG 0xFD
 
-void init_is31fl3731(unsigned int i2c, uint8_t i2c_addr);
-void is31fl3731_clear(unsigned int i2c, uint8_t i2c_addr); 
-void is31fl3731_show(unsigned int i2c, uint8_t i2c_addr, uint8_t *buffer, unsigned int length);
-void adjust_buffer(uint8_t *buffer, unsigned int length);
+void init_is31fl3731(i2c_device *dev);
+void is31fl3731_clear(i2c_device *dev); 
+void is31fl3731_show(i2c_device *dev, uint8_t *buffer, unsigned int length);

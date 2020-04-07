@@ -443,9 +443,11 @@ int main(void) {
   clock_init();
 
   initSpi();
-  //unsigned int i2c = initI2C();
-  //init_is31fl3731(i2c, SCROLLBIT_ADDR);
-  //scroll_text(i2c, SCROLLBIT_ADDR, "this is a test");
+  //i2c_device is31fl3731;
+  //is31fl3731.i2c = initI2C();
+  //is31fl3731.i2c_addr = SCROLLBIT_ADDR;
+  //init_is31fl3731(&is31fl3731);
+  //scroll_text(&is31fl3731, "this is a test");
 
 
   screen_init();

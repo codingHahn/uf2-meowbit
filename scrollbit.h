@@ -4,5 +4,5 @@
 #include "is31fl3731.h"
 #include <libopencmsis/core_cm3.h>
 
-void scroll_text(unsigned int i2c, uint8_t i2c_addr, char *text);
+void scroll_text(i2c_device *dev, char *text);
 
