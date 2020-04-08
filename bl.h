@@ -76,7 +76,8 @@ extern void delay(unsigned msec);
 #define TIMER_CIN	1
 #define TIMER_LED	2
 #define TIMER_DELAY	3
-extern volatile unsigned timer[NTIMERS];	/* each timer decrements every millisecond if > 0 */
+extern volatile unsigned
+timer[NTIMERS];	/* each timer decrements every millisecond if > 0 */
 
 /* generic receive buffer for async reads */
 extern void buf_put(uint8_t b);
@@ -145,8 +146,9 @@ void pin_set(int pincfg, int v);
 int pin_get(int pincfg);
 
 uint32_t pinport(int pin);
-static inline uint16_t pinmask(int pin) {
-    return 1 << (pin & 0xf);
+static inline uint16_t pinmask(int pin)
+{
+	return 1 << (pin & 0xf);
 }
 
 extern int hf2_mode;
@@ -164,6 +166,7 @@ void draw_screen();
 void print4(int x, int y, int col, const char *text);
 void drawBar(int y, int h, int c);
 void start_systick();
-void drawImage(uint16_t x, uint16_t y, uint16_t w, uint16_t h, const uint16_t* data);
+void drawImage(uint16_t x, uint16_t y, uint16_t w, uint16_t h,
+	       const uint16_t *data);
 void board_set_rtc_signature(uint32_t sig, uint32_t arg);
 void delay(unsigned msec);

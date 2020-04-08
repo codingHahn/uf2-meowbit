@@ -8,12 +8,12 @@
  */
 
 typedef struct {
-  Servo base;
-  Servo tip;
-  int8_t base_deg;
-  int8_t tip_deg;
-  int8_t multiplier;
-  uint8_t offset;
+	Servo base;
+	Servo tip;
+	int8_t base_deg;
+	int8_t tip_deg;
+	int8_t multiplier;
+	uint8_t offset;
 } leg_t;
 
 /*

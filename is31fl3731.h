@@ -13,5 +13,5 @@
 #define MATRIX_CMD_REG 0xFD
 
 void init_is31fl3731(i2c_device *dev);
-void is31fl3731_clear(i2c_device *dev); 
+void is31fl3731_clear(i2c_device *dev);
 void is31fl3731_show(i2c_device *dev, uint8_t *buffer, unsigned int length);

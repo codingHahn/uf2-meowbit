@@ -36,10 +36,9 @@ DEALINGS IN THE SOFTWARE.
 #error "Too small DMESG buffer"
 #endif
 
-typedef struct CodalLogStore
-{
-    uint32_t ptr;
-    char buffer[DEVICE_DMESG_BUFFER_SIZE];
+typedef struct CodalLogStore {
+	uint32_t ptr;
+	char buffer[DEVICE_DMESG_BUFFER_SIZE];
 } CodalLogStore;
 extern CodalLogStore codalLogStore;
 
