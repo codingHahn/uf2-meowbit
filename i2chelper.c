@@ -21,3 +21,27 @@ void read_register8(unsigned int i2c, uint8_t i2c_addr, uint8_t reg,
 {
 	i2c_transfer7(i2c, i2c_addr, &reg, 1, data, 1);
 }
+
+/*
+ * Only write data partially using the specified bitmask. i.e.
+ * data		|	bitmask
+ * -------------|-----------------
+ * 0b00100010	|	0b00000011
+ *
+ * Result:
+ * 	data & bitmask: 0b00000010
+ *
+ * Only the bits enabled in the bitmask get written.
+ */
+void write_partial_register8(unsigned int i2c, uint8_t i2c_addr, uint8_t reg,
+			     uint8_t data, uint8_t bitmask)
+{
+
+	data &= bitmask;
+
+	uint8_t old_data;
+
+	read_register8(i2c, i2c_addr, reg, &old_data);
+	old_data |= data;
+	write_register8(i2c, i2c_addr, reg, old_data);
+}
