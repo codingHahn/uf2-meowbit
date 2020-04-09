@@ -8,6 +8,7 @@
 #include "img.h"
 #include "scrollbit.h"
 #include "is31fl3731.h"
+#include "mpu6050.h"
 #include "robot.h"
 #include <string.h>
 #include <math.h>
@@ -471,27 +472,32 @@ int main(void)
 
 	screen_init();
 
-	i2c_device pca9685;
-	pca9685.i2c = initI2C();
-	pca9685.i2c_addr = 0x40;
-	init_pca9685(&pca9685);
+	//i2c_device pca9685;
+	//pca9685.i2c = initI2C();
+	//pca9685.i2c_addr = 0x40;
+	//init_pca9685(&pca9685);
 
-	robot_t r;
-	r.dev = &pca9685;
-	r.leg1 = &leg1;
-	r.leg2 = &leg2;
-	r.leg3 = &leg3;
-	r.leg4 = &leg4;
+	i2c_device mpu6050;
+	mpu6050.i2c = initI2C();
+	mpu6050.i2c_addr = MPU6050_ADDR;
+	init_mpu6050(&mpu6050);	
 
-	robot = &r;
+	//robot_t r;
+	//r.dev = &pca9685;
+	//r.leg1 = &leg1;
+	//r.leg2 = &leg2;
+	//r.leg3 = &leg3;
+	//r.leg4 = &leg4;
 
-	move_leg_to_deg(&pca9685, &leg1, 0);
-	move_leg_to_deg(&pca9685, &leg3, 0);
-	move_leg_to_deg(&pca9685, &leg2, 0);
-	move_leg_to_deg(&pca9685, &leg4, 0);
-	stand_up(robot, 30);
-	delay(1000);
-	tim_setup();
+	//robot = &r;
+
+	//move_leg_to_deg(&pca9685, &leg1, 0);
+	//move_leg_to_deg(&pca9685, &leg3, 0);
+	//move_leg_to_deg(&pca9685, &leg2, 0);
+	//move_leg_to_deg(&pca9685, &leg4, 0);
+	//stand_up(robot, 30);
+	//delay(1000);
+	//tim_setup();
 
 	//swing(&robot, 200000);
 	//spin_sin(robot);

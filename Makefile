@@ -34,7 +34,7 @@ EXTRAFLAGS ?= -D$(CPUTYPE)
 #
 export FLAGS		 = -std=gnu99 \
 			   -g \
-			   -O3 \
+			   -Og \
 			   -Wundef \
 			   -Wall \
 			   -fno-builtin \
