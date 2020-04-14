@@ -2,10 +2,11 @@
 
 void init_mpu6050(i2c_device *dev)
 {
-	whoami_mpu6050(dev);
+	set_clock_source_mpu6050(dev, MPU6050_CLK_SRC_PPL_GYROX);
 	set_accel_range_mpu6050(dev, MPU6050_ACCEL_RANGE_2G);
 	set_gyro_range_mpu6050(dev, MPU6050_GYRO_RANGE_500);
 	set_sleep_mpu6050(dev, MPU6050_NOSLEEP);
+	whoami_mpu6050(dev);
 
 }
 void set_clock_source_mpu6050(i2c_device *dev, uint8_t clk)
